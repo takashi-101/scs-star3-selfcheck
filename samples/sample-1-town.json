@@ -1,0 +1,483 @@
+{
+ "format": "scs-star3-selfcheck",
+ "formatVersion": 1,
+ "requirementsSha256": "d4c27aa4bfed5521a98ff9ce8c042743e4204e4b8310ceb3df0c54eabfdc8dd1",
+ "savedAt": "2026-10-27T00:00:00.000Z",
+ "org": {
+  "name": "（架空）見本町役場",
+  "kind": "地方公共団体",
+  "assessor": "総務課 情報担当 見本 太郎（架空）",
+  "date": "2026-10-20",
+  "expert": "",
+  "scope": "本庁舎の行政事務（住民情報系・内部情報系）。教育委員会と公営企業は今回の範囲外。"
+ },
+ "checks": {
+  "1-2-1-1": {
+   "status": "done",
+   "memo": "情報セキュリティポリシー第3条で、最高情報セキュリティ責任者（副町長）と総務課情報担当の役割を定めている。",
+   "evidence": "例規集「見本町情報セキュリティポリシー」第3条"
+  },
+  "1-2-1-2": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "1-2-1-3": {
+   "status": "partial",
+   "memo": "体制の点検は情報セキュリティ委員会で行っているが、令和7年度は開催していない。",
+   "evidence": "情報セキュリティ委員会の議事録（総務課 共有フォルダ）"
+  },
+  "1-2-3-1": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "1-2-3-2": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "1-3-1-1": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "1-3-1-2": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "1-3-1-3": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "2-1-1-1": {
+   "status": "partial",
+   "memo": "外部サービス・委託先台帳を今回作り始めた。教育委員会が契約しているサービスはまだ載っていない。",
+   "evidence": "本ツールの外部サービス・委託先台帳"
+  },
+  "2-1-1-2": {
+   "status": "todo",
+   "memo": "年1回の点検の仕組みはまだない。",
+   "evidence": ""
+  },
+  "2-1-2-1": {
+   "status": "partial",
+   "memo": "住民情報システムの委託契約には取り決めがある。グループウェアは利用規約のみ。",
+   "evidence": "契約書の保管場所：総務課 契約書ファイル"
+  },
+  "2-1-4-1": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "3-1-1-1": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "3-1-1-2": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "3-1-1-3": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "3-1-1-4": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "3-1-2-1": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "3-1-2-2": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "3-1-3-1": {
+   "status": "partial",
+   "memo": "住民情報を扱うサービスには調達時の要件があるが、それ以外のクラウドサービスには要件がない。",
+   "evidence": "調達仕様書（住民情報システム）"
+  },
+  "3-1-3-2": {
+   "status": "partial",
+   "memo": "台帳の「契約書のセキュリティ条項」が「あり」でないサービスが2件ある。",
+   "evidence": "本ツールの外部サービス・委託先台帳"
+  },
+  "3-1-4-1": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "3-1-4-2": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "3-1-4-3": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-1-1": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-1-2": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-1-3": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-1-4": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-2-1": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-2-2": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-2-3": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-2-4": {
+   "status": "na",
+   "memo": "町で開発環境を持っていない（システム開発はすべて委託しており、開発環境は委託先にある）。",
+   "evidence": ""
+  },
+  "4-1-2-5": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-2-6": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-2-7": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-2-8": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-3-1": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-3-2": {
+   "status": "partial",
+   "memo": "グループウェアは管理者だけ多要素認証を設定している。電子申請サービスは設定状況を確認中。",
+   "evidence": "グループウェア管理画面の設定画面の写し"
+  },
+  "4-1-3-3": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-3-4": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-4-1": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-4-2": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-5-1": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-5-2": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-5-3": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-5-4": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-5-5": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-6-1": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-6-2": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-6-3": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-7-1": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-2-2-1": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-2-2-2": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-2-2-3": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-3-4-1": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-3-4-2": {
+   "status": "todo",
+   "memo": "庁内ファイルサーバの遠隔地バックアップをしていない。",
+   "evidence": ""
+  },
+  "4-3-4-3": {
+   "status": "partial",
+   "memo": "住民情報システムは運用センターに手順書がある。ファイルサーバは手順書がない。",
+   "evidence": ""
+  },
+  "4-4-1-1": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-4-1-2": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-4-1-3": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-4-4-1": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-4-4-2": {
+   "status": "partial",
+   "memo": "パソコンは自動更新。ネットワーク機器は保守業者が年2回まとめて更新しており、14日以内になっていない。",
+   "evidence": "保守作業報告書"
+  },
+  "4-4-5-1": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-4-5-2": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-4-5-3": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-5-1-1": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-5-1-2": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-5-1-3": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-5-1-4": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "5-1-1-1": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "5-1-1-2": {
+   "status": "todo",
+   "memo": "ログを見て判断する担当と手順が決まっていない。",
+   "evidence": ""
+  },
+  "6-1-1-1": {
+   "status": "done",
+   "memo": "インシデント対応手順を定めている。",
+   "evidence": "情報セキュリティ対策基準 別紙「インシデント対応手順」"
+  },
+  "6-1-1-2": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "6-1-1-3": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "6-1-1-4": {
+   "status": "todo",
+   "memo": "体制の年1回の点検はしていない。",
+   "evidence": ""
+  },
+  "6-1-1-5": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "6-1-1-6": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "7-1-1-1": {
+   "status": "partial",
+   "memo": "住民情報システムの目標復旧レベルは決めた。他のシステムは業務切替表を作成中。",
+   "evidence": "本ツールの停止時の業務切替表"
+  }
+ },
+ "services": [
+  {
+   "id": "s-town-1",
+   "name": "住民情報システム（共同利用型）",
+   "provider": "（架空）県内自治体共同運用センター／運用委託：甲情報サービス（架空）",
+   "dataTypes": "住民基本台帳、税、国民健康保険の情報",
+   "volume": "1万〜10万件",
+   "admin": "住民課 システム担当係長",
+   "mfa": "あり（全員）",
+   "contractClause": "あり",
+   "impactedOps": "窓口での証明書発行、転入転出の手続き、税の賦課"
+  },
+  {
+   "id": "s-town-2",
+   "name": "庁内グループウェア（クラウド型）",
+   "provider": "（架空）乙クラウド株式会社",
+   "dataTypes": "職員のメール、予定表、庁内の文書",
+   "volume": "100〜1,000件",
+   "admin": "総務課 情報担当",
+   "mfa": "一部の人だけ",
+   "contractClause": "契約書なし（利用規約のみ）",
+   "impactedOps": "庁内の連絡、会議の日程調整"
+  },
+  {
+   "id": "s-town-3",
+   "name": "電子申請サービス",
+   "provider": "（架空）丙システムズ株式会社",
+   "dataTypes": "申請者の氏名・住所・連絡先、申請内容",
+   "volume": "1,000〜1万件",
+   "admin": "企画課 デジタル推進担当",
+   "mfa": "不明",
+   "contractClause": "あり",
+   "impactedOps": "子育て・福祉の各種申請の受付"
+  },
+  {
+   "id": "s-town-4",
+   "name": "庁内ネットワーク保守",
+   "provider": "（架空）丁通信サービス株式会社",
+   "dataTypes": "ネットワーク機器の設定情報（住民の情報は預けていない）",
+   "volume": "不明",
+   "admin": "総務課 情報担当",
+   "mfa": "なし",
+   "contractClause": "なし",
+   "impactedOps": "庁内のすべての業務（ネットワークが止まった場合）"
+  }
+ ],
+ "fallbacks": [
+  {
+   "id": "f-town-1",
+   "operation": "住民票の写し等の証明書発行",
+   "serviceIds": [
+    "s-town-1"
+   ],
+   "alternative": "窓口で申請書を受け付けて番号札を渡し、復旧後に順番に発行する。急ぎの人には他の手段（郵送請求など）を案内する。",
+   "decider": "住民課長（不在時は課長補佐）",
+   "contact": "住民課 内線101／共同運用センター 運用窓口（番号は課内掲示）",
+   "restoreChecks": "受付済み申請の件数と発行件数が合っているか。停止中に受け付けた転入届の入力漏れがないか。"
+  },
+  {
+   "id": "f-town-2",
+   "operation": "子育て支援の電子申請受付",
+   "serviceIds": [
+    "s-town-3"
+   ],
+   "alternative": "町ウェブサイトに停止の案内を掲示し、紙の申請書（窓口・郵送）で受け付ける。",
+   "decider": "企画課長",
+   "contact": "企画課 内線203",
+   "restoreChecks": ""
+  },
+  {
+   "id": "f-town-3",
+   "operation": "庁内の連絡・会議調整",
+   "serviceIds": [
+    "s-town-2",
+    "s-town-4"
+   ],
+   "alternative": "庁内電話と紙の回覧に切り替える。",
+   "decider": "",
+   "contact": "",
+   "restoreChecks": "停止中の回覧文書を電子化して共有フォルダへ戻す。"
+  }
+ ]
+}

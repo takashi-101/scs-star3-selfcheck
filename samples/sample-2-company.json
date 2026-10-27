@@ -1,0 +1,445 @@
+{
+ "format": "scs-star3-selfcheck",
+ "formatVersion": 1,
+ "requirementsSha256": "d4c27aa4bfed5521a98ff9ce8c042743e4204e4b8310ceb3df0c54eabfdc8dd1",
+ "savedAt": "2026-10-27T00:00:00.000Z",
+ "org": {
+  "name": "（架空）サンプル精密工業株式会社",
+  "kind": "中小企業",
+  "assessor": "総務部 見本 花子（架空）",
+  "date": "2026-10-22",
+  "expert": "",
+  "scope": "本社工場（従業員40名）の事務・技術・生産管理の業務とIT基盤。"
+ },
+ "checks": {
+  "1-2-1-1": {
+   "status": "partial",
+   "memo": "社長がセキュリティの責任者であることは決めているが、文書になっていない。",
+   "evidence": ""
+  },
+  "1-2-1-2": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "1-2-1-3": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "1-2-3-1": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "1-2-3-2": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "1-3-1-1": {
+   "status": "done",
+   "memo": "情報セキュリティ基本方針を定めた。",
+   "evidence": "社内共有フォルダ「規程」"
+  },
+  "1-3-1-2": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "1-3-1-3": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "2-1-1-1": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "2-1-1-2": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "2-1-2-1": {
+   "status": "partial",
+   "memo": "主要な発注元2社とは秘密保持契約がある。外注先とは取り決めがない。",
+   "evidence": "秘密保持契約書（総務部 金庫）"
+  },
+  "2-1-4-1": {
+   "status": "todo",
+   "memo": "インシデント時の役割分担を取引先と決めていない。",
+   "evidence": ""
+  },
+  "3-1-1-1": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "3-1-1-2": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "3-1-1-3": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "3-1-1-4": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "3-1-2-1": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "3-1-2-2": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "3-1-3-1": {
+   "status": "todo",
+   "memo": "クラウドサービスを使う前の確認項目がない。担当者がそれぞれ申し込んでいる。",
+   "evidence": ""
+  },
+  "3-1-3-2": {
+   "status": "todo",
+   "memo": "図面共有サービスは利用規約に同意しただけで、合意書はない。",
+   "evidence": "本ツールの外部サービス・委託先台帳"
+  },
+  "3-1-4-1": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "3-1-4-2": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "3-1-4-3": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-1-1": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-1-2": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-1-3": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-1-4": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-2-1": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-2-2": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-2-3": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-2-4": {
+   "status": "na",
+   "memo": "自社で開発環境を持っていない。",
+   "evidence": ""
+  },
+  "4-1-2-5": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-2-6": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-2-7": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-2-8": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-3-1": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-3-2": {
+   "status": "todo",
+   "memo": "図面共有サービスで多要素認証を使っていない。",
+   "evidence": "本ツールの外部サービス・委託先台帳"
+  },
+  "4-1-3-3": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-3-4": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-4-1": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-4-2": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-5-1": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-5-2": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-5-3": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-5-4": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-5-5": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-6-1": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-6-2": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-1-7-1": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-2-2-1": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-2-2-2": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-3-4-1": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-3-4-2": {
+   "status": "partial",
+   "memo": "会計データはサービス側で保管。図面は社内NASだけにあり、遠隔地バックアップがない。",
+   "evidence": ""
+  },
+  "4-3-4-3": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-4-1-1": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-4-1-2": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-4-1-3": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-4-4-1": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-4-4-2": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-4-5-1": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-4-5-2": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-4-5-3": {
+   "status": "done",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-5-1-1": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "4-5-1-2": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "5-1-1-1": {
+   "status": "partial",
+   "memo": "ルーターの機能で外からの通信は遮断している。社内から不正なサーバへの通信の検知はしていない。",
+   "evidence": "ルーター設定画面の写し"
+  },
+  "5-1-1-2": {
+   "status": "todo",
+   "memo": "",
+   "evidence": ""
+  },
+  "5-1-1-3": {
+   "status": "todo",
+   "memo": "",
+   "evidence": ""
+  },
+  "6-1-1-1": {
+   "status": "partial",
+   "memo": "連絡先一覧はあるが、対応の手順書はない。",
+   "evidence": ""
+  },
+  "6-1-1-2": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "6-1-1-3": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "6-1-1-4": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "6-1-1-5": {
+   "status": "todo",
+   "memo": "",
+   "evidence": ""
+  },
+  "6-1-1-6": {
+   "status": "partial",
+   "memo": "",
+   "evidence": ""
+  },
+  "7-1-1-1": {
+   "status": "partial",
+   "memo": "出荷と図面受け取りは停止時の業務切替表を作った。会計は未検討。",
+   "evidence": "本ツールの停止時の業務切替表"
+  }
+ },
+ "services": [
+  {
+   "id": "s-co-1",
+   "name": "クラウド会計サービス",
+   "provider": "（架空）会計クラウドA社",
+   "dataTypes": "取引先の口座情報、請求・支払の記録",
+   "volume": "1,000〜1万件",
+   "admin": "経理部長",
+   "mfa": "あり（全員）",
+   "contractClause": "契約書なし（利用規約のみ）",
+   "impactedOps": "請求書発行、支払処理、月次決算"
+  },
+  {
+   "id": "s-co-2",
+   "name": "取引先との図面共有サービス",
+   "provider": "（架空）ファイル共有B社",
+   "dataTypes": "発注元から預かった図面・仕様書（機密）",
+   "volume": "100〜1,000件",
+   "admin": "技術部 課長",
+   "mfa": "なし",
+   "contractClause": "不明",
+   "impactedOps": "発注元からの図面受け取り、試作品の製作"
+  },
+  {
+   "id": "s-co-3",
+   "name": "生産管理システムの保守委託",
+   "provider": "（架空）システム保守C社",
+   "dataTypes": "受注・生産計画・在庫の情報",
+   "volume": "1万〜10万件",
+   "admin": "生産管理課 主任",
+   "mfa": "不明",
+   "contractClause": "あり",
+   "impactedOps": "生産計画、出荷"
+  }
+ ],
+ "fallbacks": [
+  {
+   "id": "f-co-1",
+   "operation": "発注元からの図面受け取り",
+   "serviceIds": [
+    "s-co-2"
+   ],
+   "alternative": "発注元の担当者に連絡し、発注元が指定する方法（発注元のサービス、暗号化した媒体の手渡し）に切り替える。",
+   "decider": "技術部長",
+   "contact": "技術部長 携帯（社内連絡網に記載）／発注元の窓口は取引先一覧に記載",
+   "restoreChecks": "停止中に受け取った図面を保管場所に戻したか。共有サービスに不審なアクセス記録がないか。"
+  },
+  {
+   "id": "f-co-2",
+   "operation": "出荷",
+   "serviceIds": [
+    "s-co-3"
+   ],
+   "alternative": "前日に印刷しておく出荷予定表をもとに、手書きの出荷伝票で出荷する。",
+   "decider": "生産管理課長",
+   "contact": "生産管理課 内線30／保守C社 障害受付（番号は保守契約書に記載）",
+   "restoreChecks": "手書き伝票の内容をシステムに入力し、在庫数が実数と合うか確認する。"
+  }
+ ]
+}
