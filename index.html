@@ -1,0 +1,872 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- 外部への通信を一切しないことをブラウザに強制する -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+<title>SCS★3 自己点検ツール</title>
+<!-- ブラウザが favicon.ico を取りに行かないよう、空のアイコンを埋め込む -->
+<link rel="icon" href="data:,">
+<style>
+:root {
+  --ink: #1d2430; --muted: #5b6575; --line: #cfd6e0; --bg: #f5f7fa; --card: #fff;
+  --accent: #1f5fae; --accent-soft: #e6eef9;
+  --done: #2e7d4f; --partial: #c48a0a; --todo: #c0392b; --na: #7a8494; --none: #e3e7ed;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-family: "BIZ UDPGothic", "Yu Gothic UI", "Meiryo", "Hiragino Sans", sans-serif;
+  color: var(--ink); background: var(--bg); line-height: 1.6; font-size: 15px; }
+header.app { background: var(--card); border-bottom: 1px solid var(--line); padding: 12px 16px;
+  display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; position: sticky; top: 0; z-index: 5; }
+header.app h1 { font-size: 18px; margin: 0; }
+header.app .org { color: var(--muted); font-size: 14px; }
+header.app .tools { margin-left: auto; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+nav.tabs { display: flex; flex-wrap: wrap; gap: 4px; padding: 8px 16px 0; background: var(--card); border-bottom: 1px solid var(--line); }
+nav.tabs button { border: 1px solid var(--line); border-bottom: none; background: var(--bg); padding: 8px 14px;
+  border-radius: 6px 6px 0 0; cursor: pointer; font: inherit; color: var(--ink); }
+nav.tabs button[aria-selected="true"] { background: var(--card); font-weight: bold; border-color: var(--accent); color: var(--accent); }
+main { max-width: 1180px; margin: 0 auto; padding: 16px; }
+section.tab { display: none; }
+section.tab.active { display: block; }
+h2 { font-size: 20px; margin: 8px 0 12px; }
+h3 { font-size: 17px; margin: 20px 0 8px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; margin-bottom: 14px; }
+.note { color: var(--muted); font-size: 13px; }
+.btn { font: inherit; font-size: 14px; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--accent);
+  background: var(--card); color: var(--accent); cursor: pointer; }
+.btn.primary { background: var(--accent); color: #fff; }
+.btn.danger { border-color: var(--todo); color: var(--todo); }
+.btn:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid #8fb4e8; outline-offset: 1px; }
+label.field { display: block; margin-bottom: 10px; }
+label.field > span { display: block; font-weight: bold; font-size: 14px; }
+input[type="text"], input[type="date"], select, textarea { font: inherit; font-size: 14px; width: 100%;
+  padding: 6px 8px; border: 1px solid var(--line); border-radius: 5px; background: #fff; color: var(--ink); }
+textarea { min-height: 3.2em; resize: vertical; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0 16px; }
+dl.glossary dt { font-weight: bold; margin-top: 6px; }
+dl.glossary dd { margin: 0 0 0 1em; }
+
+/* 進み具合 */
+.progress-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.progress-table th, .progress-table td { padding: 4px 6px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+.progress-table td.num { text-align: right; white-space: nowrap; }
+.bar { display: flex; height: 14px; border-radius: 3px; overflow: hidden; background: var(--none); min-width: 120px; }
+.bar span { display: block; height: 100%; }
+.bar .done { background: var(--done); } .bar .partial { background: var(--partial); }
+.bar .todo { background: var(--todo); } .bar .na { background: var(--na); }
+.legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 13px; margin-top: 6px; }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 2px; vertical-align: -1px; margin-right: 4px; }
+
+/* 点検表 */
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: 8px 0 12px; }
+.toolbar select { width: auto; }
+.domain-head { background: var(--accent); color: #fff; padding: 6px 12px; border-radius: 6px; margin: 22px 0 10px; font-size: 16px; }
+.req { background: var(--card); border: 1px solid var(--line); border-radius: 8px; margin-bottom: 14px; }
+.req > .req-head { padding: 10px 14px; border-bottom: 1px solid var(--line); background: var(--accent-soft); border-radius: 8px 8px 0 0; }
+.req-no { font-weight: bold; color: var(--accent); margin-right: 6px; }
+.req-title { font-weight: bold; }
+.req-text { margin: 4px 0 0; white-space: pre-wrap; }
+.req-meta { font-size: 12px; color: var(--muted); }
+.linked { margin: 10px 14px 0; padding: 8px 12px; border-left: 4px solid var(--partial); background: #fff8e8; font-size: 14px; }
+.linked ul { margin: 4px 0; padding-left: 1.4em; }
+.crit { padding: 10px 14px; border-top: 1px dashed var(--line); }
+.crit:first-of-type { border-top: none; }
+.crit.hidden { display: none; }
+.crit-no { font-weight: bold; margin-right: 6px; }
+.crit-text { white-space: pre-wrap; margin: 2px 0 8px; }
+.status-group { border: none; padding: 0; margin: 0 0 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+.status-group legend { font-size: 13px; color: var(--muted); padding: 0; margin-bottom: 4px; width: 100%; }
+.status-group label { border: 1px solid var(--line); border-radius: 16px; padding: 3px 12px; cursor: pointer; font-size: 14px; user-select: none; }
+.status-group input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.status-group input:focus-visible + span { outline: 3px solid #8fb4e8; outline-offset: 2px; }
+.status-group label:has(input[value="done"]:checked) { background: var(--done); color: #fff; border-color: var(--done); }
+.status-group label:has(input[value="partial"]:checked) { background: var(--partial); color: #fff; border-color: var(--partial); }
+.status-group label:has(input[value="todo"]:checked) { background: var(--todo); color: #fff; border-color: var(--todo); }
+.status-group label:has(input[value="na"]:checked) { background: var(--na); color: #fff; border-color: var(--na); }
+.crit-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; }
+.crit-fields label > span { font-size: 13px; color: var(--muted); display: block; }
+.warn { color: var(--todo); font-size: 13px; }
+
+/* 台帳・切替表 */
+.table-wrap { overflow-x: auto; background: var(--card); border: 1px solid var(--line); border-radius: 8px; }
+table.edit { border-collapse: collapse; width: 100%; min-width: 1100px; font-size: 14px; }
+table.edit th, table.edit td { border: 1px solid var(--line); padding: 4px; vertical-align: top; }
+table.edit th { background: var(--accent-soft); font-size: 13px; text-align: left; padding: 6px; }
+table.edit td { min-width: 8.5em; }
+table.edit td.rowno { text-align: center; color: var(--muted); width: 2.5em; min-width: 2.5em; }
+table.edit textarea { min-height: 4.5em; }
+.svc-pick { max-height: 9em; overflow-y: auto; border: 1px solid var(--line); border-radius: 5px; padding: 4px 6px; background: #fff; }
+.svc-pick label { display: block; font-size: 13px; }
+.pill { display: inline-block; font-size: 12px; padding: 0 8px; border-radius: 10px; background: var(--none); margin: 1px 2px; }
+.pill.bad { background: #fde3df; color: var(--todo); }
+.pill.ok { background: #dff2e6; color: var(--done); }
+
+/* 出力 */
+table.list { border-collapse: collapse; width: 100%; font-size: 14px; background: var(--card); }
+table.list th, table.list td { border: 1px solid var(--line); padding: 5px 7px; vertical-align: top; text-align: left; }
+table.list th { background: var(--accent-soft); }
+table.list td.pre { white-space: pre-wrap; }
+.st { font-weight: bold; white-space: nowrap; }
+.st.done { color: var(--done); } .st.partial { color: var(--partial); } .st.todo { color: var(--todo); } .st.na { color: var(--na); } .st.none { color: var(--muted); }
+.attribution { font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+.attribution code { font-size: 12px; word-break: break-all; }
+footer.app { max-width: 1180px; margin: 0 auto; padding: 8px 16px 32px; }
+
+#print-area { display: none; }
+
+@media (max-width: 720px) {
+  .crit-fields { grid-template-columns: 1fr; }
+  .progress-table th:nth-child(n+4), .progress-table td:nth-child(n+4) { display: none; }
+  .bar { min-width: 60px; }
+  header.app .tools { margin-left: 0; }
+}
+
+@media print {
+  @page { size: A4; margin: 12mm 10mm; }
+  body { background: #fff; font-size: 10pt; }
+  header.app, nav.tabs, main, footer.app { display: none !important; }
+  #print-area { display: block; }
+  #print-area h1 { font-size: 15pt; margin: 0 0 4pt; }
+  #print-area h2 { font-size: 12pt; margin: 12pt 0 4pt; border-bottom: 1.5pt solid #000; }
+  #print-area table { border-collapse: collapse; width: 100%; font-size: 8.5pt; }
+  #print-area th, #print-area td { border: 0.6pt solid #555; padding: 2pt 3pt; vertical-align: top; text-align: left; }
+  #print-area th { background: #e8e8e8; }
+  #print-area thead { display: table-header-group; }
+  #print-area tr { break-inside: avoid; }
+  #print-area td.pre { white-space: pre-wrap; }
+  #print-area tr.reqrow td { background: #f0f0f0; font-weight: bold; }
+  #print-area .sign td { height: 22pt; }
+  #print-area .pagebreak { break-before: page; }
+  #print-area .st.done, #print-area .st.partial, #print-area .st.todo, #print-area .st.na { color: #000; }
+}
+</style>
+</head>
+<body>
+<header class="app">
+  <h1>SCS評価制度 ★3 自己点検ツール</h1>
+  <span class="org" id="hdr-org"></span>
+  <div class="tools">
+    <button class="btn primary" type="button" data-action="export">点検データを保存（JSON）</button>
+    <button class="btn" type="button" data-action="import">保存したデータを開く</button>
+    <input type="file" id="import-file" accept=".json,application/json" hidden>
+    <select id="sample-select" aria-label="見本データ" style="width:auto">
+      <option value="">見本データを開く…</option>
+    </select>
+  </div>
+</header>
+
+<nav class="tabs" role="tablist">
+  <button type="button" role="tab" data-tab="intro" aria-selected="true">1. はじめに・基本情報</button>
+  <button type="button" role="tab" data-tab="check" aria-selected="false">2. ★3点検表</button>
+  <button type="button" role="tab" data-tab="ledger" aria-selected="false">3. 外部サービス・委託先台帳</button>
+  <button type="button" role="tab" data-tab="fallback" aria-selected="false">4. 停止時の業務切替表</button>
+  <button type="button" role="tab" data-tab="output" aria-selected="false">5. 出力（印刷・一覧）</button>
+</nav>
+
+<main>
+<!-- 1. はじめに -->
+<section class="tab active" id="tab-intro" role="tabpanel">
+  <h2>はじめに</h2>
+  <div class="card">
+    <p>このツールは、経済産業省と内閣官房国家サイバー統括室が進める「サプライチェーン強化に向けたセキュリティ対策評価制度（SCS評価制度）」の<strong>★3</strong>について、自分たちで点検し、その結果を<strong>SCSセキュリティ専門家</strong>の確認に回せる形で書き出すための道具です。</p>
+    <p>★3は「専門家確認付き自己評価」（自分たちで点検し、専門家がその内容を確認する方式）です。このツールが作るのは<strong>「自分で点検する部分」と「専門家に渡す資料」</strong>までで、★3を満たしているかどうかの判定はしません。</p>
+    <ol>
+      <li>この画面で団体・会社の基本情報を書きます。</li>
+      <li>「2. ★3点検表」で、評価基準（点検するときのものさし）ごとに対応状況を選び、根拠と証跡（対応していることを示す文書や画面）の置き場所を書きます。</li>
+      <li>「3. 外部サービス・委託先台帳」に、使っているクラウドサービスや委託先を1行ずつ書きます。</li>
+      <li>「4. 停止時の業務切替表」に、サービスが止まったときの代わりの回し方を業務ごとに書きます。</li>
+      <li>「5. 出力」から、専門家に渡す一覧を印刷（PDF保存）します。</li>
+    </ol>
+    <p class="note"><strong>データの扱い：</strong>入力した内容はこの端末のブラウザの中だけにあり、どこにも送信しません（このファイルはインターネットにつながっていない端末でも動きます）。作業を終えるときは、必ず上の「点検データを保存（JSON）」でファイルに保存してください。保存しないままブラウザを閉じると、入力した内容は消えます。</p>
+  </div>
+
+  <h2>基本情報</h2>
+  <div class="card grid2" id="org-form">
+    <label class="field"><span>団体名・会社名</span><input type="text" data-org="name"></label>
+    <label class="field"><span>区分</span>
+      <select data-org="kind"><option value=""></option><option>地方公共団体</option><option>中小企業</option><option>その他</option></select></label>
+    <label class="field"><span>点検した人（部署・氏名）</span><input type="text" data-org="assessor"></label>
+    <label class="field"><span>点検日</span><input type="date" data-org="date"></label>
+    <label class="field"><span>確認を頼むSCSセキュリティ専門家（分かっていれば）</span><input type="text" data-org="expert"></label>
+    <label class="field"><span>点検の範囲（対象にした組織・拠点・システム）</span><textarea data-org="scope"></textarea></label>
+  </div>
+
+  <h2>用語の説明</h2>
+  <div class="card">
+    <dl class="glossary">
+      <dt>要求事項</dt><dd>★3で求められている対策の項目です。番号（例：3-1-3）が付いています。</dd>
+      <dt>評価基準</dt><dd>要求事項を満たしているかを点検するときのものさしです。番号（例：3-1-3-1）の最初の3つは、ひも付く要求事項の番号です。</dd>
+      <dt>証跡（しょうせき）</dt><dd>対応していることを示す証拠となる文書や画面（規程、台帳、設定画面の写し、記録など）です。</dd>
+      <dt>委託先</dt><dd>業務の一部を任せている外部の会社・団体です。</dd>
+      <dt>多要素認証</dt><dd>パスワードに加えて、スマートフォンへの通知や確認コードなど、パスワード以外の確認手段も使ってログインする仕組みです。</dd>
+      <dt>セキュリティインシデント</dt><dd>情報の漏えい、不正アクセス、システムの停止など、情報セキュリティ上の事故や事件です。</dd>
+    </dl>
+  </div>
+</section>
+
+<!-- 2. 点検表 -->
+<section class="tab" id="tab-check" role="tabpanel">
+  <h2>★3点検表</h2>
+  <div class="card">
+    <h3 style="margin-top:0">分野ごとの進み具合</h3>
+    <div id="progress"></div>
+    <div class="legend">
+      <span><i style="background:var(--done)"></i>対応済み</span>
+      <span><i style="background:var(--partial)"></i>一部対応</span>
+      <span><i style="background:var(--todo)"></i>未対応</span>
+      <span><i style="background:var(--na)"></i>対象外</span>
+      <span><i style="background:var(--none)"></i>未回答</span>
+    </div>
+  </div>
+  <div class="toolbar">
+    <label>表示する評価基準：
+      <select id="filter">
+        <option value="all">すべて</option>
+        <option value="unanswered">未回答のものだけ</option>
+        <option value="open">未対応・一部対応のものだけ</option>
+      </select></label>
+    <span class="note">★3の評価基準だけを表示しています（★4だけに求められる評価基準は表示しません）。「対象外」を選んだときは、その理由を根拠メモに書いてください。</span>
+  </div>
+  <div id="checklist"></div>
+</section>
+
+<!-- 3. 台帳 -->
+<section class="tab" id="tab-ledger" role="tabpanel">
+  <h2>外部サービス・委託先台帳</h2>
+  <div class="card">
+    <p>使っているクラウドサービス（インターネット経由で使うサービス）や、業務を任せている委託先を、<strong>1行に1サービス</strong>で書きます。この台帳は、点検表の要求事項3-1-3（外部情報サービスの管理）と、「取引先管理」の分野の点検欄から参照されます。</p>
+    <p class="note">ここで書いたサービス名は「4. 停止時の業務切替表」で選ぶ候補になります。同じサービスは1行にまとめ、名前の書き方をそろえてください。</p>
+  </div>
+  <div class="toolbar"><button class="btn primary" type="button" data-action="add-service">＋ 行を追加</button><span id="ledger-summary" class="note"></span></div>
+  <div class="table-wrap"><table class="edit" id="ledger-table"></table></div>
+</section>
+
+<!-- 4. 切替表 -->
+<section class="tab" id="tab-fallback" role="tabpanel">
+  <h2>停止時の業務切替表</h2>
+  <div class="card">
+    <p>サービスや委託先が止まったときに、業務をどう回すかを<strong>1行に1業務</strong>で書きます。この表は、点検表の「インシデントへの対応」「インシデントからの復旧」の分野の点検欄から参照されます。</p>
+    <p class="note">「頼っているサービス」は「3. 外部サービス・委託先台帳」の行から選びます。候補にないサービスは、先に台帳へ追加してください。</p>
+  </div>
+  <div class="toolbar"><button class="btn primary" type="button" data-action="add-fallback">＋ 行を追加</button><span id="fallback-summary" class="note"></span></div>
+  <div class="table-wrap"><table class="edit" id="fallback-table"></table></div>
+</section>
+
+<!-- 5. 出力 -->
+<section class="tab" id="tab-output" role="tabpanel">
+  <h2>出力</h2>
+  <div class="card">
+    <h3 style="margin-top:0">印刷・PDF保存</h3>
+    <p>ボタンを押すと印刷画面が開きます。PDFにするときは、印刷先で「PDFに保存」（またはMicrosoft Print to PDF）を選んでください。</p>
+    <p><button class="btn primary" type="button" data-action="print-full">専門家確認に渡す点検結果一覧を印刷</button>
+       <button class="btn" type="button" data-action="print-open">未対応・一部対応の一覧を印刷</button></p>
+    <p class="note">点検結果一覧には、基本情報、分野ごとの集計、評価基準ごとの判定・根拠メモ・証跡の置き場所、台帳、切替表、署名欄が入ります。</p>
+  </div>
+  <div class="card">
+    <h3 style="margin-top:0">保存と読み込み</h3>
+    <p><button class="btn primary" type="button" data-action="export">点検データを保存（JSON）</button>
+       <button class="btn" type="button" data-action="import">保存したデータを開く</button>
+       <button class="btn danger" type="button" data-action="reset">入力をすべて消す</button></p>
+  </div>
+  <h3>未対応・一部対応の一覧</h3>
+  <div id="open-list"></div>
+</section>
+</main>
+
+<footer class="app">
+  <div class="card attribution" id="attribution"></div>
+</footer>
+
+<div id="print-area"></div>
+
+<script id="scs-requirements" type="application/json">{"source":{"title":"★3・★4要求事項及び評価基準","publisher":"経済産業省","url":"https://www.meti.go.jp/policy/netsecurity/docs/scs/scs_3.xlsx","also_published_at":["https://www.ipa.go.jp/security/scs/rcu1hd0000007a2i-att/20260327001-c.xlsx"],"retrieved":"2026-10-27","file_name":"scs_3.xlsx","sha256":"d4c27aa4bfed5521a98ff9ce8c042743e4204e4b8310ceb3df0c54eabfdc8dd1","sheet_name":"★3・★4要求事項・評価基準","license":"公共データ利用規約（第1.0版）（PDL1.0）"},"counts":{"requirements_all":43,"criteria_all":153,"requirements_star3":26,"criteria_star3":81},"domains":[{"no":"1","name":"ガバナンスの整備"},{"no":"2","name":"取引先管理"},{"no":"3","name":"リスクの特定"},{"no":"4","name":"攻撃等の防御"},{"no":"5","name":"攻撃等の検知"},{"no":"6","name":"インシデントへの対応"},{"no":"7","name":"インシデントからの復旧"}],"requirements":[{"no":"1-1-1","domain_no":"1","category_no":"1-1","category":"組織の状況","title":"社内ルール","text":"セキュリティに関する法令等に規定された事項を考慮し、社内ルールを策定及び周知すること。","star3":false,"star4":true,"nist_csf":"統治(GV)"},{"no":"1-2-1","domain_no":"1","category_no":"1-2","category":"役割、責任、権限","title":"セキュリティ推進活動部門","text":"セキュリティ推進活動を担当する部署、役員及び従業員を決定し、責任及び権限を割り当てること。","star3":true,"star4":true,"nist_csf":"統治(GV)"},{"no":"1-2-2","domain_no":"1","category_no":"1-2","category":"役割、責任、権限","title":"サイバー攻撃の監視・分析体制","text":"サイバー攻撃及び予兆を監視・分析をする体制を整備すること。","star3":false,"star4":true,"nist_csf":"統治(GV)"},{"no":"1-2-3","domain_no":"1","category_no":"1-2","category":"役割、責任、権限","title":"守秘義務のルール","text":"守秘義務のルールを策定し、遵守させること。","star3":true,"star4":true,"nist_csf":"統治(GV)"},{"no":"1-3-1","domain_no":"1","category_no":"1-3","category":"ポリシー","title":"セキュリティ対応方針の策定","text":"自社のセキュリティ対応方針を策定し、周知すること。","star3":true,"star4":true,"nist_csf":"統治(GV)"},{"no":"1-4-1","domain_no":"1","category_no":"1-4","category":"監督","title":"セキュリティ対策推進計画","text":"セキュリティ対策推進計画を策定し、定期的に経営層へ対策実施状況に関する報告を行うとともに、報告結果を対策の推進に反映すること。","star3":false,"star4":true,"nist_csf":"統治(GV)"},{"no":"2-1-1","domain_no":"2","category_no":"2-1","category":"サイバーセキュリティサプライチェーンリスクマネジメント","title":"取引先とのビジネス又はシステム上の関係","text":"取引先と自社とのビジネス又はシステム上の関係を把握すること。","star3":true,"star4":true,"nist_csf":"統治(GV)"},{"no":"2-1-2","domain_no":"2","category_no":"2-1","category":"サイバーセキュリティサプライチェーンリスクマネジメント","title":"機密情報の取扱い","text":"自社の機密情報の取扱い方法を、共有先との間で明確にすること。","star3":true,"star4":true,"nist_csf":"統治(GV)"},{"no":"2-1-3","domain_no":"2","category_no":"2-1","category":"サイバーセキュリティサプライチェーンリスクマネジメント","title":"取引先のセキュリティ対策状況","text":"事業継続リスク及び情報管理リスクの観点から自社に影響を及ぼす可能性のある取引先のセキュリティ対策状況を把握すること。","star3":false,"star4":true,"nist_csf":"統治(GV)"},{"no":"2-1-4","domain_no":"2","category_no":"2-1","category":"サイバーセキュリティサプライチェーンリスクマネジメント","title":"セキュリティインシデント発生時の役割・責任","text":"セキュリティインシデント発生時の他社との役割及び責任を明確にすること。","star3":true,"star4":true,"nist_csf":"統治(GV)"},{"no":"2-1-5","domain_no":"2","category_no":"2-1","category":"サイバーセキュリティサプライチェーンリスクマネジメント","title":"機密情報の回収・破棄","text":"取引先との契約終了時に自社の機密情報及び当該機密情報へのアクセス権を回収する又は破棄させること。","star3":false,"star4":true,"nist_csf":"統治(GV)"},{"no":"3-1-1","domain_no":"3","category_no":"3-1","category":"資産管理","title":"情報機器、OS及びソフトウェアに関する情報の把握","text":"情報機器、OS及びソフトウェアに関する情報を把握すること。","star3":true,"star4":true,"nist_csf":"識別(ID)"},{"no":"3-1-2","domain_no":"3","category_no":"3-1","category":"資産管理","title":"ネットワークに関する情報の把握","text":"ネットワークに関する情報を把握するための仕組みを整備すること。","star3":true,"star4":true,"nist_csf":"識別(ID)"},{"no":"3-1-3","domain_no":"3","category_no":"3-1","category":"資産管理","title":"外部情報サービスの管理","text":"自社の機密情報を扱う外部情報サービスを管理すること。","star3":true,"star4":true,"nist_csf":"識別(ID)"},{"no":"3-1-4","domain_no":"3","category_no":"3-1","category":"資産管理","title":"機密区分に応じた情報の管理","text":"機密区分に応じた情報の管理ルールを定め、それに基づく管理を行うこと。","star3":true,"star4":true,"nist_csf":"識別(ID)"},{"no":"3-1-5","domain_no":"3","category_no":"3-1","category":"資産管理","title":"リモートワークにおけるルール","text":"リモートワークで使用する情報機器及び機密情報の条件についてのルールを定めること。","star3":false,"star4":true,"nist_csf":"識別(ID)"},{"no":"3-2-1","domain_no":"3","category_no":"3-2","category":"リスクアセスメント","title":"脆弱性の管理体制","text":"脆弱性の管理体制、管理プロセスを定め、それに基づく管理を行うこと。","star3":false,"star4":true,"nist_csf":"識別(ID)"},{"no":"4-1-1","domain_no":"4","category_no":"4-1","category":"アイデンティティ管理、認証、アクセス制御","title":"ユーザIDの管理手続","text":"ユーザIDの発行・変更・削除の手続を定めること。","star3":true,"star4":true,"nist_csf":"防御(PR)"},{"no":"4-1-2","domain_no":"4","category_no":"4-1","category":"アイデンティティ管理、認証、アクセス制御","title":"管理者IDの管理手続","text":"管理者IDの発行・変更・削除の手続を定めること。","star3":true,"star4":true,"nist_csf":"防御(PR)"},{"no":"4-1-3","domain_no":"4","category_no":"4-1","category":"アイデンティティ管理、認証、アクセス制御","title":"認証の強度・実装方法の決定","text":"システム及び情報の重要度に応じて認証の強度及び実装方法を決定すること。","star3":true,"star4":true,"nist_csf":"防御(PR)"},{"no":"4-1-4","domain_no":"4","category_no":"4-1","category":"アイデンティティ管理、認証、アクセス制御","title":"アカウントロック制御","text":"パソコン及びスマートデバイスにはロック制御を行うこと。","star3":true,"star4":true,"nist_csf":"防御(PR)"},{"no":"4-1-5","domain_no":"4","category_no":"4-1","category":"アイデンティティ管理、認証、アクセス制御","title":"パスワード設定ルール","text":"パスワード設定に関するルールを定め、周知すること。","star3":true,"star4":true,"nist_csf":"防御(PR)"},{"no":"4-1-6","domain_no":"4","category_no":"4-1","category":"アイデンティティ管理、認証、アクセス制御","title":"パスワード管理ルール","text":"パスワードの管理に関するルールを定め、周知すること。","star3":true,"star4":true,"nist_csf":"防御(PR)"},{"no":"4-1-7","domain_no":"4","category_no":"4-1","category":"アイデンティティ管理、認証、アクセス制御","title":"アクセス権の管理ルール","text":"アクセス権の管理ルールを定めること。","star3":true,"star4":true,"nist_csf":"防御(PR)"},{"no":"4-1-8","domain_no":"4","category_no":"4-1","category":"アイデンティティ管理、認証、アクセス制御","title":"サーバ設置エリアへの入退室管理","text":"サーバの設置エリアへの入退室を管理し、記録すること。","star3":false,"star4":true,"nist_csf":"防御(PR)"},{"no":"4-1-9","domain_no":"4","category_no":"4-1","category":"アイデンティティ管理、認証、アクセス制御","title":"可搬媒体の制限","text":"可搬媒体の持込み・持出しを制限すること。","star3":false,"star4":true,"nist_csf":"防御(PR)"},{"no":"4-2-1","domain_no":"4","category_no":"4-2","category":"意識向上とトレーニング","title":"セキュリティの意識向上のための教育・研修","text":"経営層を含むすべての要員に対して、セキュリティの意識向上のための教育・研修を実施すること。","star3":false,"star4":true,"nist_csf":"防御(PR)"},{"no":"4-2-2","domain_no":"4","category_no":"4-2","category":"意識向上とトレーニング","title":"セキュリティインシデント発生時の教育・訓練","text":"セキュリティインシデント発生時の対応に関する教育・訓練を行うこと。","star3":true,"star4":true,"nist_csf":"防御(PR)"},{"no":"4-3-1","domain_no":"4","category_no":"4-3","category":"データセキュリティ","title":"データの暗号化","text":"情報機器及び情報システムの保管データを適切に暗号化するようルールを定め、周知すること。","star3":false,"star4":true,"nist_csf":"防御(PR)"},{"no":"4-3-2","domain_no":"4","category_no":"4-3","category":"データセキュリティ","title":"データの保管ルール","text":"データを適切な場所に保管するようルールを定め、周知すること。","star3":false,"star4":true,"nist_csf":"防御(PR)"},{"no":"4-3-3","domain_no":"4","category_no":"4-3","category":"データセキュリティ","title":"取引先との情報共有ルール","text":"取引先との情報共有及び情報送信に関するルールを定め、周知すること。","star3":false,"star4":true,"nist_csf":"防御(PR)"},{"no":"4-3-4","domain_no":"4","category_no":"4-3","category":"データセキュリティ","title":"適切なバックアップ","text":"適切なバックアップを行うこと。","star3":true,"star4":true,"nist_csf":"防御(PR)"},{"no":"4-4-1","domain_no":"4","category_no":"4-4","category":"プラットフォームセキュリティ","title":"情報機器、OS及びソフトウェアの安全な構成","text":"情報機器、OS及びソフトウェアの安全な構成を確立し、維持すること。","star3":true,"star4":true,"nist_csf":"防御(PR)"},{"no":"4-4-2","domain_no":"4","category_no":"4-4","category":"プラットフォームセキュリティ","title":"サポート期限の切れたOS及びソフトウェアへの対策","text":"サポート期限の切れたOS及びソフトウェアの利用停止及び更改を実施すること。","star3":false,"star4":true,"nist_csf":"防御(PR)"},{"no":"4-4-3","domain_no":"4","category_no":"4-4","category":"プラットフォームセキュリティ","title":"ログの取得","text":"システムに関するログを取得し、異常を検知するため、定期的にレビューを行うこと。","star3":false,"star4":true,"nist_csf":"防御(PR)"},{"no":"4-4-4","domain_no":"4","category_no":"4-4","category":"プラットフォームセキュリティ","title":"セキュリティパッチ・アップデートの手続","text":"情報機器、OS及びソフトウェアへのセキュリティパッチ及びアップデートの適用に係る手続を定めること。","star3":true,"star4":true,"nist_csf":"防御(PR)"},{"no":"4-4-5","domain_no":"4","category_no":"4-4","category":"プラットフォームセキュリティ","title":"マルウェア感染からの保護","text":"システムをマルウェア感染から保護すること。","star3":true,"star4":true,"nist_csf":"防御(PR)"},{"no":"4-5-1","domain_no":"4","category_no":"4-5","category":"技術インフラのレジリエンス","title":"ネットワーク境界防護","text":"ネットワークを適切に分離し、境界部分を防護すること。","star3":true,"star4":true,"nist_csf":"防御(PR)"},{"no":"5-1-1","domain_no":"5","category_no":"5-1","category":"継続的監視","title":"ネットワーク接続・データの監視","text":"ネットワーク上の適切な場所でネットワーク接続及びデータ転送を監視すること。","star3":true,"star4":true,"nist_csf":"検知(DE)"},{"no":"5-1-2","domain_no":"5","category_no":"5-1","category":"継続的監視","title":"情報機器及びソフトウェアの挙動監視","text":"情報機器及びソフトウェアの状態及び挙動を監視すること。","star3":false,"star4":true,"nist_csf":"検知(DE)"},{"no":"5-2-1","domain_no":"5","category_no":"5-2","category":"有害事象の分析","title":"セキュリティインシデントのレベルごとの対象範囲","text":"セキュリティインシデントのレベル及びレベルごとの対象範囲を明確にすること。","star3":false,"star4":true,"nist_csf":"検知(DE)"},{"no":"6-1-1","domain_no":"6","category_no":"6-1","category":"インシデント管理","title":"インシデント対応手順","text":"セキュリティインシデントへの対応手順、対応体制等を定めること。","star3":true,"star4":true,"nist_csf":"対応(RS)"},{"no":"7-1-1","domain_no":"7","category_no":"7-1","category":"インシデント復旧計画の実行","title":"事業継続要件に沿った復旧準備","text":"事業上重要なシステムについて、事業継続の要件に沿う復旧に必要な準備を行うこと。","star3":true,"star4":true,"nist_csf":"復旧(RC)"}],"criteria":[{"no":"1-1-1-1","req_no":"1-1-1","level":"★4","text":"・セキュリティに関連する以下の事項を把握した上で、社内ルールを定めること。\n- 自社に関連する法令(事業法、個人情報保護法等)\n- 所管省庁及び関係団体における基準\n- 取引先が提示する制限事項及び要求事項","source_row":3},{"no":"1-1-1-2","req_no":"1-1-1","level":"★4","text":"・No.1-1-1-1で定める事項の改定及び変更の状況について、年１回以上の頻度で確認を行い、社内ルールの内容を点検すること。","source_row":4},{"no":"1-1-1-3","req_no":"1-1-1","level":"★4","text":"・策定・見直した社内ルールを役員、従業員、派遣社員及び受入出向者へと周知すること。","source_row":5},{"no":"1-2-1-1","req_no":"1-2-1","level":"★3","text":"・セキュリティを統括する役員(例えば、CISOを設置する会社の場合は、当該CISO)及びセキュリティ担当部署の役割・責任を定めること。","source_row":6},{"no":"1-2-1-2","req_no":"1-2-1","level":"★3","text":"・平時のセキュリティ推進活動に必要な役員(例えば、CISOを設置する会社の場合は、当該CISO)及びセキュリティ担当部署の連絡先リストを定めること。","source_row":7},{"no":"1-2-1-3","req_no":"1-2-1","level":"★3","text":"・年1回以上の頻度でNo.1-2-1-1及びNo.1-2-1-2にて定めた平時の体制について点検すること。","source_row":8},{"no":"1-2-1-4","req_no":"1-2-1","level":"★4","text":"・セキュリティリスクは、経営に重大な影響を及ぼすことを前提として、その対応について、経営層が参加する情報セキュリティ委員会等の経営判断ができる体制を設置すること。","source_row":9},{"no":"1-2-2-1","req_no":"1-2-2","level":"★4","text":"・サイバー攻撃及び脆弱性に関する公開情報又は非公開情報を活用する体制を整備すること。","source_row":10},{"no":"1-2-2-2","req_no":"1-2-2","level":"★4","text":"・入手した情報又はログの相関分析等により、サイバー攻撃の予兆及びインシデントの発生の検知を可能とし、インシデントの防止及びインシデントが発生した場合の対応が導き出せる体制を整備すること。","source_row":11},{"no":"1-2-3-1","req_no":"1-2-3","level":"★3","text":"・役員、従業員、派遣社員及び受入出向者を対象に、自社の守秘義務のルールを定めること。","source_row":12},{"no":"1-2-3-2","req_no":"1-2-3","level":"★3","text":"・入社時又は社外要員の受入れ時に守秘義務のルールを説明すること。","source_row":13},{"no":"1-2-3-3","req_no":"1-2-3","level":"★4","text":"・自社の機密情報を取り扱う役員及び従業員に、守秘義務の誓約書を提出させること。(社外要員を除く。)","source_row":14},{"no":"1-2-3-4","req_no":"1-2-3","level":"★4","text":"・派遣社員及び受入出向者について、派遣元及び出向元の会社と業務開始前に守秘義務を締結すること。","source_row":15},{"no":"1-3-1-1","req_no":"1-3-1","level":"★3","text":"・自社のセキュリティ対応方針を定めること。","source_row":16},{"no":"1-3-1-2","req_no":"1-3-1","level":"★3","text":"・定常的に役員、従業員、派遣社員及び受入出向者が最新のセキュリティ対応方針を参照できるようにすること。","source_row":17},{"no":"1-3-1-3","req_no":"1-3-1","level":"★3","text":"・セキュリティ対応方針の改正時に、当該改正内容を役員、従業員、派遣社員及び受入出向者に周知すること。","source_row":18},{"no":"1-3-1-4","req_no":"1-3-1","level":"★4","text":"・年１回以上の頻度でセキュリティ対応方針の内容を点検すること。","source_row":19},{"no":"1-4-1-1","req_no":"1-4-1","level":"★4","text":"・セキュリティ担当部署は、年１回以上、セキュリティを統括する役員(例えば、CISOを設置する会社の場合は、当該CISO)に対して、以下にて求める対策の点検の結果を踏まえたセキュリティ対策の実態及び当該実態を踏まえて策定した今後の対策推進計画を報告し承認を得た上で、当該報告結果を社内部署と共有すること。\n[点検を求める対策(評価基準)]\nNo.1-1-1-2、1-2-1-3、1-3-1-4、2-1-1-2、3-1-1-4、3-1-1-7、3-1-2-4、3-1-4-2、3-1-4-4、3-1-4-6、3-1-5-3、3-2-1-5、4-1-7-2、4-1-9-3、4-2-1-5、4-2-2-3、5-1-2-2、6-1-1-4","source_row":20},{"no":"1-4-1-2","req_no":"1-4-1","level":"★4","text":"・No.1-4-1-1における対策推進計画の報告に際し、役員からの改善に向けた指示があった場合、セキュリティ担当部署は、当該指示内容の記録、計画への反映及び不備の是正を実施すること。","source_row":21},{"no":"2-1-1-1","req_no":"2-1-1","level":"★3","text":"・自社以外の組織(顧客・子会社・関係会社・クラウドサービス提供者を含む取引先)が管理・提供し、自社の資産が接続しているシステムを把握するための仕組みを整備すること。","source_row":22},{"no":"2-1-1-2","req_no":"2-1-1","level":"★3","text":"・年1回以上の頻度でNo.2-1-1-1において把握した情報の内容を点検すること。","source_row":23},{"no":"2-1-1-3","req_no":"2-1-1","level":"★4","text":"・自社の機密情報を共有している子会社又は取引先について、以下の事項を把握するための仕組みを整備すること。\n- 会社ごとに取り交わす手段(受発注の手段、情報のやり取り等)\n- 取引に伴い授受・使用される情報資産及びその取扱い","source_row":24},{"no":"2-1-2-1","req_no":"2-1-2","level":"★3","text":"・自社の機密情報を共有する子会社又は取引先との間で、業務開始前に機密情報の取扱いについて、以下の事項を取り決めること。\n- 機密情報の定義\n- 機密情報の利用制限、保管方法、複製可否及び第三者への提供可否\n- 機密情報の返還又は廃棄","source_row":25},{"no":"2-1-3-1","req_no":"2-1-3","level":"★4","text":"・以下に示す条件のいずれか若しくは複数に該当する子会社又は取引先を対象に、年1回以上の頻度で、以下の例を参考にセキュリティ対策状況を把握すること。 \n[対策状況把握の対象とする子会社又は取引先の条件]\n- 自社の重要な機密情報を提供・共有する\n- 自社の事業継続にとって重要な位置づけを持つ\n- 当該取引先の環境から発注者の内部システムへのアクセスが可能\n[対策状況の把握方法(例)]\n- 本制度が定める★の取得状況について取引先から回答を受領する、又は本制度の運用主体が管理するWebサイト等で確認する\n- 取引先に訪問し点検を実施する\n- セキュリティ対策チェックシートを作成して回答を受領する","source_row":26},{"no":"2-1-4-1","req_no":"2-1-4","level":"★3","text":"・自社の機密情報を共有する子会社又は取引先との間で、セキュリティインシデント発生時の自社と子会社又は取引先の役割及び責任を定めること。","source_row":27},{"no":"2-1-5-1","req_no":"2-1-5","level":"★4","text":"・自社の機密情報を共有する子会社又は取引先から、契約終了時に機密情報及びアクセス権が回収又は破棄されていることについて確認する手順(例：回収物一覧のチェックシートの作成)を整備すること。","source_row":28},{"no":"3-1-1-1","req_no":"3-1-1","level":"★3","text":"・パソコン及びシンクライアントの製造元、OS及び台数を把握するための仕組みを整備すること。","source_row":29},{"no":"3-1-1-2","req_no":"3-1-1","level":"★3","text":"・サーバ、仮想サーバ及びハイパーバイザの製造元、OS及び台数を把握するための仕組みを整備すること。","source_row":30},{"no":"3-1-1-3","req_no":"3-1-1","level":"★3","text":"・情報機器、OS及びソフトウェアについて、導入、設置、ネットワーク接続及びセキュリティパッチ適用のルールを含む管理ルールを定めること。","source_row":31},{"no":"3-1-1-4","req_no":"3-1-1","level":"★3","text":"・年1回以上の頻度でNo.3-1-1-3で定めた管理ルールの遵守状況について点検すること。","source_row":32},{"no":"3-1-1-5","req_no":"3-1-1","level":"★4","text":"・スマートデバイスの製造元、OS及び台数を把握するための仕組みを整備すること。","source_row":33},{"no":"3-1-1-6","req_no":"3-1-1","level":"★4","text":"・重要なシステムを構成する情報機器について、設定情報を把握するための仕組みを整備すること。","source_row":34},{"no":"3-1-1-7","req_no":"3-1-1","level":"★4","text":"・年1回以上の頻度でNo.3-1-1-1、No.3-1-1-2、No.3-1-1-5及びNo.3-1-1-6で把握した情報の内容について、点検すること。","source_row":35},{"no":"3-1-2-1","req_no":"3-1-2","level":"★3","text":"・ネットワークを把握するための仕組みを整備すること。その際、把握すべき情報の中に各ネットワークの所在地及び用途に関する情報を含めること。","source_row":36},{"no":"3-1-2-2","req_no":"3-1-2","level":"★3","text":"・ネットワーク機器を把握するための仕組みを整備すること。その際、把握すべき情報の中に各機器の製造元、モデル及び保守事業者に関する情報を含めること。","source_row":37},{"no":"3-1-2-3","req_no":"3-1-2","level":"★4","text":"・ネットワークを対象として、ネットワーク図を作成すること。","source_row":38},{"no":"3-1-2-4","req_no":"3-1-2","level":"★4","text":"・年1回以上の頻度でNo.3-1-2-3で作成したネットワーク図の記載内容について点検すること。","source_row":39},{"no":"3-1-3-1","req_no":"3-1-3","level":"★3","text":"外部情報サービスを利用する際のセキュリティ要件を定めたうえで、外部情報サービスの利用時に当該要件を満たしているかサービス内容を確認すること。","source_row":40},{"no":"3-1-3-2","req_no":"3-1-3","level":"★3","text":"・外部情報サービスの提供事業者と機密情報の取扱いについて合意を取り交わすこと。","source_row":41},{"no":"3-1-4-1","req_no":"3-1-4","level":"★3","text":"・自社の保有する情報を対象に、以下の内容を含む管理ルールを定めること。\n- 機密の特定\n- 機密区分のレベル判定及び表示\n- 区分に応じた取扱方法\n- 取扱エリアの区分及び制限","source_row":42},{"no":"3-1-4-2","req_no":"3-1-4","level":"★3","text":"・年1回以上の頻度でNo.3-1-4-1で定めた管理ルールの内容について点検すること。","source_row":43},{"no":"3-1-4-3","req_no":"3-1-4","level":"★3","text":"・重要な機密情報並びに当該情報ごとの管理者名、部署名、保管場所、保管期限、開示先及び管理者の連絡先を把握するための仕組みを整備すること。","source_row":44},{"no":"3-1-4-4","req_no":"3-1-4","level":"★4","text":"・年1回以上の頻度でNo.3-1-4-3で把握した項目の内容について点検すること。","source_row":45},{"no":"3-1-4-5","req_no":"3-1-4","level":"★4","text":"・退職時及び任期満了時には機密情報及び情報機器を回収すること。\n- 回収物には、情報(印刷物及び記憶媒体)、パソコン、スマートデバイス及びアクセス権(ID及び鍵)を含めること。\n- 回収漏れが起こらない手順(例：回収物一覧のチェックシートの作成)を整備すること。","source_row":46},{"no":"3-1-4-6","req_no":"3-1-4","level":"★4","text":"・年1回以上の頻度でNo.3-1-4-5で求める機密情報及び情報機器の回収の状況について点検すること。","source_row":47},{"no":"3-1-4-7","req_no":"3-1-4","level":"★4","text":"・サーバ、会社支給のパソコン、スマートデバイス及び外部記憶媒体の廃棄時(リース終了時を含む。)はデータを復元できないよう抹消処理を行うこと。\n※ディスクのフォーマットは、データを復旧される可能性があるため不十分","source_row":48},{"no":"3-1-4-8","req_no":"3-1-4","level":"★4","text":"・サーバ、会社支給のパソコン、スマートデバイス及び外部記憶媒体の記憶領域を抹消処理した記録を保管すること。","source_row":49},{"no":"3-1-5-1","req_no":"3-1-5","level":"★4","text":"・リモートワークを実施する場合は、リモートワークで使用する情報機器及び機密情報の条件について、以下の事項に関するルールを定めること。\n- リモートワークで使用許可する情報機器及び当該許可の申請・承認の方法\n- 個人所有機器にダウンロード可能なファイルの機密区分及び種類","source_row":50},{"no":"3-1-5-2","req_no":"3-1-5","level":"★4","text":"・No.3-1-5-1で定めたルールをリモートワークを行う全ての役員、従業員、派遣社員及び受入出向者に対して周知すること。","source_row":51},{"no":"3-1-5-3","req_no":"3-1-5","level":"★4","text":"・年1回以上の頻度でNo.3-1-5-1で定めたルールの内容及び遵守状況について点検すること。","source_row":52},{"no":"3-2-1-1","req_no":"3-2-1","level":"★4","text":"・脆弱性情報/脅威情報の収集から対応まで担当部署の役割・責任を定めること。","source_row":53},{"no":"3-2-1-2","req_no":"3-2-1","level":"★4","text":"・脆弱性情報/脅威情報を収集する情報源、ツール及び頻度を定めること。","source_row":54},{"no":"3-2-1-3","req_no":"3-2-1","level":"★4","text":"・収集した脆弱性情報/脅威情報の対応要否判断基準・対応手順を定めること。","source_row":55},{"no":"3-2-1-4","req_no":"3-2-1","level":"★4","text":"・管理対象の情報機器における脆弱性の残存状況を把握するための仕組みを整備すること。","source_row":56},{"no":"3-2-1-5","req_no":"3-2-1","level":"★4","text":"・収集した脆弱性情報/脅威情報に対する対応履歴を記録し、対応漏れがないかどうかについて月次で点検すること。","source_row":57},{"no":"4-1-1-1","req_no":"4-1-1","level":"★3","text":"・自社の役員、従業員、派遣社員及び受入出向者に対するユーザIDの付与・変更・削除は申請・承認制にすること。","source_row":58},{"no":"4-1-1-2","req_no":"4-1-1","level":"★3","text":"・ユーザIDの共有について、以下のいずれかを適用すること。\n- ユーザIDを共有しない。\n- やむを得ず共有IDが必要な場合(例えば、システムの仕様により、使用人数分のユーザIDを発行することができない場合)は、共有IDを利用したユーザを特定できるようにする。","source_row":59},{"no":"4-1-1-3","req_no":"4-1-1","level":"★3","text":"・ユーザIDが不要になった場合(例えば、ユーザが組織を退職した場合又はユーザIDが一定期間使用されなかった場合)、速やかにユーザIDを削除又は無効化すること。","source_row":60},{"no":"4-1-1-4","req_no":"4-1-1","level":"★3","text":"ユーザIDに付与したアクセス権が不要になった場合(例えば、ユーザの業務上の役割が変わった場合)は、当該権限を速やかに削除又は無効化すること。","source_row":61},{"no":"4-1-2-1","req_no":"4-1-2","level":"★3","text":"・すべてのサーバ及びネットワーク機器について、システム管理者及び責任者を定めること。","source_row":62},{"no":"4-1-2-2","req_no":"4-1-2","level":"★3","text":"・管理者権限を付与する役員、従業員、派遣社員及び受入出向者を限定したうえで、管理者IDについて以下のいずれかを適用すること。\n- 管理者IDを共有しない。\n- やむを得ず管理者IDの共有が必要な場合(例えば、システムの仕様により、使用人数分のIDを発行することができない場合)は、共有の管理者IDを利用したユーザを特定できるようにすること。","source_row":63},{"no":"4-1-2-3","req_no":"4-1-2","level":"★3","text":"・各管理者IDに対して当該IDの用途に応じた必要最低限の権限のみを付与すること。","source_row":64},{"no":"4-1-2-4","req_no":"4-1-2","level":"★3","text":"・開発環境を利用する役員、従業員、派遣社員及び受入出向者が本番環境において、開発環境における管理者権限で操作できないようにすること。","source_row":65},{"no":"4-1-2-5","req_no":"4-1-2","level":"★3","text":"・組織内でどの役員、従業員、派遣社員及び受入出向者が管理者IDを持っているかを把握するための仕組みを整備すること。","source_row":66},{"no":"4-1-2-6","req_no":"4-1-2","level":"★3","text":"・管理者IDが不要になった場合(例えば、管理者が組織を退職した場合及び管理者IDが一定期間使用されなかった場合)、速やかに管理者IDを削除又は無効化すること。","source_row":67},{"no":"4-1-2-7","req_no":"4-1-2","level":"★3","text":"・管理者IDの付与・変更・削除は申請・承認制にすること。","source_row":68},{"no":"4-1-2-8","req_no":"4-1-2","level":"★3","text":"・管理者IDの付与・変更・削除並びにサーバ及びネットワーク機器の設定内容の変更を行う権限を業務上必要な役員、従業員、派遣社員及び受入出向者に限定すること。","source_row":69},{"no":"4-1-3-1","req_no":"4-1-3","level":"★3","text":"・すべてのユーザID及び管理者IDについて、システム及び情報機器へのアクセスを許可する前に、ユーザIDごとに設定されている認証情報(パスワード等)でユーザを認証すること。","source_row":70},{"no":"4-1-3-2","req_no":"4-1-3","level":"★3","text":"・重要な機密情報を取り扱うクラウドサービスにおいて、ユーザ及び管理者がサービスにアクセスする場合は、常にNo.4-1-3-3で示す認証要素を利用した多要素認証を使用すること。","source_row":71},{"no":"4-1-3-3","req_no":"4-1-3","level":"★3","text":"・多要素認証の使用に当たっては、以下のいずれかの要素から2種類以上を選択し、利用すること。\n- 知識情報(例：ID・パスワード)\n- 所有情報(例：ワンタイムパスワード※又は証明書)\n- 生体情報(例：指紋、顔、虹彩又は静脈)\n- その他の情報(例：IPアドレス)\n\n※利用者のメールアドレス、電話番号等に対してワンタイムパスワードを送信して利用者に入力させる方法及びスマートフォンへの認証要求を利用した認証方式を含む。","source_row":72},{"no":"4-1-3-4","req_no":"4-1-3","level":"★3","text":"・多要素認証の知識情報として用いるパスワードは、8文字以上とすること。","source_row":73},{"no":"4-1-3-5","req_no":"4-1-3","level":"★4","text":"・重要な機密情報を取り扱うシステムにおいて、No.4-1-3-2で対象としているクラウドサービスへのアクセスに加えて、以下に示す場合は、常にNo.4-1-3-3で示す認証要素を使用した多要素認証を使用すること。\n- インターネットを経由して社内環境へ接続する場合\n- 管理者がインターネット経由でシステムにアクセスする場合\n- ユーザがインターネット経由で重要な機密情報を取り扱うシステムにアクセスする場合","source_row":74},{"no":"4-1-4-1","req_no":"4-1-4","level":"★3","text":"・パソコンへのログオン及びスマートデバイスのロック解除にあたって、以下のいずれかを適用すること。\n- 試行回数を調整し、試行が失敗するたびに試行間隔が長くなるようにする。\n- 試行が少なくとも10回以上失敗すると端末をロックする。\n- 上記で示す要件のいずれも設定することができない場合、No.4-1-5で求められるよりも強度の高いパスワードを用いる等の代替策を用いること。","source_row":75},{"no":"4-1-4-2","req_no":"4-1-4","level":"★3","text":"・パソコンへのログオン及びスマートデバイスのロック解除を行う場合、最低でも6文字以上のパスワード又はPINを利用すること。","source_row":76},{"no":"4-1-5-1","req_no":"4-1-5","level":"★3","text":"・パソコン、サーバ、スマートデバイス及びクラウドサービスの利用者又は管理者は、それらにおけるデフォルトパスワードを変更するよう社内ルールを定めること。","source_row":77},{"no":"4-1-5-2","req_no":"4-1-5","level":"★3","text":"・ユーザ認証にパスワードを利用する場合、推測されやすい単語の設定を禁止するよう社内ルールを定めること。","source_row":78},{"no":"4-1-5-3","req_no":"4-1-5","level":"★3","text":"・ユーザ認証にパスワードを利用する場合、以下のいずれかの保護対策を講じるよう社内ルールを定めること。\n- No.4-1-3-3で示す認証要素を利用した多要素認証を使用するか、又は試行が少なくとも10回失敗した場合にアカウントロックするように制限したうえで、パスワードの長さを8文字以上とする。\n- 上記のとおり多要素認証又は試行回数の制限を実施できない場合、パスワードの長さは、英大文字小文字、数字を含めた10文字以上とする。","source_row":79},{"no":"4-1-5-4","req_no":"4-1-5","level":"★3","text":"・ユーザ認証にパスワードを利用する場合、情報機器及びサービス間でのパスワードを使い回さないよう社内ルールを定めること。","source_row":80},{"no":"4-1-5-5","req_no":"4-1-5","level":"★3","text":"No.4-1-5-1からNo.4-1-5-4までで定めたパスワード設定に関するルールについて、役員、従業員、派遣社員及び受入出向者を対象に周知すること。","source_row":81},{"no":"4-1-6-1","req_no":"4-1-6","level":"★3","text":"・紙媒体への記載及び施錠保管、パスワード管理アプリの利用等により、パスワードを安全に保管するよう社内ルールを定めること。","source_row":82},{"no":"4-1-6-2","req_no":"4-1-6","level":"★3","text":"・パスワードの漏洩が判明した場合、又はその疑いがある場合に速やかにパスワードを変更するための手順を定めること。","source_row":83},{"no":"4-1-6-3","req_no":"4-1-6","level":"★3","text":"・No.4-1-6-1及びNo.4-1-6-2で定めたパスワードの管理に関するルールについて、役員、従業員、派遣社員及び受入出向者を対象に周知すること。","source_row":84},{"no":"4-1-7-1","req_no":"4-1-7","level":"★3","text":"・業務で利用するシステム及びパソコンへのログオン時のユーザのアクセス権並びに機密上の配慮が必要な場所及び部屋への入室について、以下の内容の管理ルールを定めること。\n- アクセス権の発行・変更・削除は申請・承認制であること。\n- 与える入室許可・アクセス権の範囲は必要な範囲に限定すること。\n- 入室権限及びアクセス権の棚卸について定めていること。\n- 与えた入室許可・アクセス権の申請書又は台帳を管理していること。","source_row":85},{"no":"4-1-7-2","req_no":"4-1-7","level":"★4","text":"・年１回以上の頻度で役員、従業員、派遣社員及び受入出向者に付与したアクセス権の棚卸を実施すること。","source_row":86},{"no":"4-1-7-3","req_no":"4-1-7","level":"★4","text":"・重要な機密情報を扱うシステムは、アクセス権を付与するための条件を定めること。","source_row":87},{"no":"4-1-7-4","req_no":"4-1-7","level":"★4","text":"・重要な機密情報を扱うシステムにおけるアクセス権の設定に当たっては、システム管理者の要件及び設定手順を定めること。","source_row":88},{"no":"4-1-7-5","req_no":"4-1-7","level":"★4","text":"・重要な機密情報を扱うシステムは、ユーザ及び管理者ごとに必要最小限の権限を付与し、個人に権限が集中しない環境とすること。","source_row":89},{"no":"4-1-7-6","req_no":"4-1-7","level":"★4","text":"・重要な機密情報を扱うシステムは、付与したアクセス権の運用/利用状況を監視する仕組みを整備すること。","source_row":90},{"no":"4-1-8-1","req_no":"4-1-8","level":"★4","text":"・サーバの設置エリアに入場可能な者を定めること。","source_row":91},{"no":"4-1-8-2","req_no":"4-1-8","level":"★4","text":"・サーバの設置に当たって、以下のいずれかの安全確保策を適用すること。\n- サーバの設置エリアを施錠すること。\n- 施錠が出来ないエリアにサーバが設置されている場合、サーバを専用ラックに入れて施錠すること。","source_row":92},{"no":"4-1-8-3","req_no":"4-1-8","level":"★4","text":"・No.4-1-8-2におけるサーバの設置エリア又は専用ラックの鍵等について、管理者を定めたうえで安全に管理すること。","source_row":93},{"no":"4-1-8-4","req_no":"4-1-8","level":"★4","text":"・入退場日時及び入場者氏名を含めて、サーバの設置エリアの入退場記録を取得し、少なくとも6 ヶ月間保管すること。","source_row":94},{"no":"4-1-9-1","req_no":"4-1-9","level":"★4","text":"・パソコン、スマートデバイス、カメラ及び外部記憶媒体(個人所有機器の業務利用(BYOD)を含む。)を対象とした社内への持込みルールを定めること。","source_row":95},{"no":"4-1-9-2","req_no":"4-1-9","level":"★4","text":"・パソコン、スマートデバイス、カメラ、外部記憶媒体(個人所有機器の業務利用(BYOD)を含む。)及び印刷物(図面等の機密書類)に関する社外への持出しルールを定めること。","source_row":96},{"no":"4-1-9-3","req_no":"4-1-9","level":"★4","text":"・年1回以上の頻度でNo.4-1-9-1及びNo.4-1-9-2で定めたパソコン、スマートデバイス、カメラ及び外部記憶媒体(個人所有機器(BYOD)を含む。)における持込みルール及び持出しルールの内容及び遵守状況について点検すること。","source_row":97},{"no":"4-2-1-1","req_no":"4-2-1","level":"★4","text":"・経営層が情報セキュリティに関する役割及び責任を理解するための機会を設けること。","source_row":98},{"no":"4-2-1-2","req_no":"4-2-1","level":"★4","text":"・セキュリティに関する職場特有のリスクの理解及びルールの遵守が必要な場合、職場単位で重要なルール及びリスクについて、年１回以上の頻度で周知すること。","source_row":99},{"no":"4-2-1-3","req_no":"4-2-1","level":"★4","text":"・以下のトピックについて、役員、従業員、派遣社員及び受入出向者を対象に、新規受入れ時、かつ、年１回以上、教育資料配布・掲示、e ラーニング、集合教育等による教育・研修を実施すること。\n- 電子メールによるマルウェア感染の予防\n- Web 閲覧によるマルウェア感染の予防\n- 機密区分の定義と取扱い","source_row":100},{"no":"4-2-1-4","req_no":"4-2-1","level":"★4","text":"・No.4-2-1-3で実施した教育・研修の実施状況を記録し、保管すること。","source_row":101},{"no":"4-2-1-5","req_no":"4-2-1","level":"★4","text":"・年１回以上の頻度でセキュリティの意識向上のための教育・研修の実施内容について点検すること。","source_row":102},{"no":"4-2-2-1","req_no":"4-2-2","level":"★3","text":"・役員、従業員、派遣社員及び受入出向者を対象に、新規受入れ時、かつ、年1回以上の頻度で、セキュリティインシデント発生時の対応について、教育資料の配布・掲示に加え、e ラーニング又は集合教育による教育・訓練を実施すること。","source_row":103},{"no":"4-2-2-2","req_no":"4-2-2","level":"★3","text":"・No.4-2-2-1で実施した教育・訓練の実施内容、実施方法、実施時期及び受講状況を記録し、保管すること。","source_row":104},{"no":"4-2-2-3","req_no":"4-2-2","level":"★3","text":"・年１回以上の頻度でセキュリティインシデント発生時の対応に関する教育・訓練の実施内容について点検すること。","source_row":105},{"no":"4-3-1-1","req_no":"4-3-1","level":"★4","text":"・社外に持ち出すパソコン及び記憶媒体の機密情報を暗号化するルールを定め、役員、従業員、派遣社員及び受入出向者を対象に周知すること。","source_row":106},{"no":"4-3-1-2","req_no":"4-3-1","level":"★4","text":"・重要な機密情報を暗号化するルールを定め、役員、従業員、派遣社員及び受入出向者を対象に周知すること。","source_row":107},{"no":"4-3-2-1","req_no":"4-3-2","level":"★4","text":"・マルウェアによる被害を受けた場合に業務に支障をきたすデータはパソコン以外の社内ネットワーク(クラウドサービスを含む。)上の相対的に安全な区域にあるサーバに保管するようルールを定め、役員、従業員、派遣社員及び受入出向者を対象に周知すること。","source_row":108},{"no":"4-3-3-1","req_no":"4-3-3","level":"★4","text":"・取引先との情報共有及び情報送信に関して、以下をルールとして定め、役員、従業員、派遣社員及び受入出向者へ周知すること。\n-社外とファイル共有する場合は、信頼できる相手とのみ共有すること。\n-社外へファイル転送をする場合は、送信履歴を残すこと。","source_row":109},{"no":"4-3-4-1","req_no":"4-3-4","level":"★3","text":"・取得対象、取得頻度及び保管期間を定めて自社で取り扱うデータのバックアップを取得すること。","source_row":110},{"no":"4-3-4-2","req_no":"4-3-4","level":"★3","text":"・重要な機密情報については、No.4-3-4-1におけるバックアップに加えて、遠隔地バックアップを実施すること。","source_row":111},{"no":"4-3-4-3","req_no":"4-3-4","level":"★3","text":"・バックアップ対象ごとにリストア手順書を整備すること。","source_row":112},{"no":"4-4-1-1","req_no":"4-4-1","level":"★3","text":"・パソコン、サーバ及びスマートデバイスで利用を許可していないソフトウェアをすべて削除若しくは無効化するか、又は利用を許可するソフトウェア以外を自由にインストールできないようにすること。","source_row":113},{"no":"4-4-1-2","req_no":"4-4-1","level":"★3","text":"・外部記録媒体を使用する端末について自動実行(auto-run)又は自動再生(auto-play)を無効化すること。","source_row":114},{"no":"4-4-1-3","req_no":"4-4-1","level":"★3","text":"・サーバ及びネットワーク機器の設定変更を申請・承認制にすること。","source_row":115},{"no":"4-4-1-4","req_no":"4-4-1","level":"★4","text":"・パソコン及びサーバ上で不要サービス及びプロトコルを無効化すること。","source_row":116},{"no":"4-4-1-5","req_no":"4-4-1","level":"★4","text":"・パソコン及びサーバ上で使用されているデフォルトユーザ ID の利用を停止するか、又はログインに当たって多要素認証等の強固な認証を用いること。","source_row":117},{"no":"4-4-1-6","req_no":"4-4-1","level":"★4","text":"・利用するOS及びソフトウェアについて、標準構成・設定ルールを定めること。","source_row":118},{"no":"4-4-2-1","req_no":"4-4-2","level":"★4","text":"・利用するOS及びソフトウェアについて、以下のいずれかを適用すること。\n- 全てのOS及びソフトウェアについてサポートのあるものを利用すること。\n- やむを得ずサポート切れのOS及びソフトウェアを利用する場合(例えば、代替システムを調達する必要があり、直ちに更改できない場合)は、更改計画を策定した上で、更改するまでの間、No.4-4-4-2で求める脆弱性悪用のリスクを低減する対策を実施すること。","source_row":119},{"no":"4-4-3-1","req_no":"4-4-3","level":"★4","text":"・インシデント発生時に調査を円滑に行うために必要なログとして、以下を取得及び保管すること。(※)\n[取得するログ(保管期間)]\n-ファイアウォールのログ(6 カ月)　※取引先と接続する閉域網の入口に設置されるものも含む。\n 取得項目：日時、送信元 IP アドレス及び送信先 IP アドレス\n-プロキシサーバのログ(6 カ月)\n 取得項目：日時、リクエスト元 IP アドレス及びURL\n-認証サーバのログ(6 カ月)\n 取得項目：日時、接続元 IP アドレス、ユーザID及び成功/失敗\n\n※クラウドサービスの利用も対象に含む。\n※利用するクラウドサービス又はシステム構成の仕様上、上記の要件を満たせない場合は、インシデント発生時の調査ができるよう、他の機器又は機能を利用して上記の要件に相当するログを取得及び保管すること。","source_row":120},{"no":"4-4-3-2","req_no":"4-4-3","level":"★4","text":"・No.4-4-3-1で取得及び保管を求めるログを脅威から保護するため、ログを保存する媒体及びシステムにインターネット経由でアクセスする場合は、常にNo.4-1-3-3で示す要素を利用した多要素認証を使用すること。","source_row":121},{"no":"4-4-3-3","req_no":"4-4-3","level":"★4","text":"・No.4-4-3-1で取得及び保管を求めるログのうち、認証サーバのログについては、月1回以上の頻度でモニタリングを実施し、不審な認証試行を検知すること。","source_row":122},{"no":"4-4-4-1","req_no":"4-4-4","level":"★3","text":"・システム、情報機器及びソフトウェアは以下の状態とすること。\n- ライセンスが付与され、サポートされている。\n- サポートが終了した場合に削除されるか、又はインターネットとの全てのトラフィックを遮断することで適用範囲から削除される。\n- 可能であれば、自動アップデートが有効化されている。","source_row":123},{"no":"4-4-4-2","req_no":"4-4-4","level":"★3","text":"・利用している機能又は設定に関して、以下のいずれかに該当するアップデートプログラムがリリースされてから14日以内に、アップデートすること。\n- 当該アップデートが、ベンダーにより「重大」(Critical)又は 「高リスク」(High Risk)と説明される脆弱性を修正するものである。\n- 当該アップデートが、CVSSの基本値が7.0以上の脆弱性を修正するものである。\n- 当該アップデートが修正する脆弱性のレベルの詳細がベンダーから提供されていない。 \n・やむを得ず上記のとおりアップデートができない場合(例えば、動作検証に一定期間を要し、期限内にアップデートが完了しない場合)は、アップデート適用までの間、以下のいずれかにより脆弱性悪用のリスクを低減する対策を実施すること。\n- 脆弱性悪用の対象となる機能を無効化すること。\n- ベンダーが推奨する回避策を実施すること。\n- 対象となる情報機器を適用範囲内のネットワークから分離すること。\n- 対象となる情報機器と適用範囲内のネットワークとの通信を監視し、当該脆弱性を悪用する不正な通信を遮断する機器又はソフトウェアを導入すること。\n\n[対象]\n-会社支給のパソコンの OS、ブラウザ及びOffice ソフト \n-サーバの OS及びミドルウェア \n-会社支給のスマートデバイスのOS及びアプリ \n-インターネットとの境界に設置されているネットワーク機器のOS及びファームウェア","source_row":124},{"no":"4-4-4-3","req_no":"4-4-4","level":"★4","text":"・インターネットとの境界に設置されているネットワーク機器のOS及びファームウェアについては、CVSS 基本値 7.0以上の脆弱性を有していないこと。","source_row":125},{"no":"4-4-5-1","req_no":"4-4-5","level":"★3","text":"・ネットワークに接続しているすべてのパソコン及びサーバに、マルウェア対策ソフトウェアを導入すること。","source_row":126},{"no":"4-4-5-2","req_no":"4-4-5","level":"★3","text":"・パソコン及びサーバごとにマルウェア対策ソフトのスキャン範囲及び頻度を定め、スキャンを実行すること。","source_row":127},{"no":"4-4-5-3","req_no":"4-4-5","level":"★3","text":"・マルウェア対策ソフトウェアのパターンファイルを、ベンダーの推奨に従ってアップデートすること。","source_row":128},{"no":"4-4-5-4","req_no":"4-4-5","level":"★4","text":"・パソコン/Web ゲートウェイを対象に、不正な Web サイトへのアクセスを制限すること。","source_row":129},{"no":"4-4-5-5","req_no":"4-4-5","level":"★4","text":"・メールによるマルウェア感染を防止するため、メールゲートウェイ、メールサーバ等でマルウェアチェックを実施すること。","source_row":130},{"no":"4-5-1-1","req_no":"4-5-1","level":"★3","text":"・全てのファイアウォール(又はファイアウォール機能を持つネットワーク機器)及びルータについて、デフォルトの管理パスワードを強固で一意のパスワードに変更する、又はリモートアクセスを完全に無効化すること。","source_row":131},{"no":"4-5-1-2","req_no":"4-5-1","level":"★3","text":"・ファイアウォール(又はファイアウォール機能を持つネットワーク機器)及びルータのパスワードを変更する手順を定めること。","source_row":132},{"no":"4-5-1-3","req_no":"4-5-1","level":"★3","text":"・ファイアウォール(又はファイアウォール機能を持つネットワーク機器)及びルータに係る認証は、No.4-1-5で定めるパスワード設定等に関する評価基準を満たすこと。","source_row":133},{"no":"4-5-1-4","req_no":"4-5-1","level":"★3","text":"・全てのファイアウォール(又はファイアウォール機能を持つネットワーク機器)について、認証されていないインバウンド通信を遮断すること。","source_row":134},{"no":"4-5-1-5","req_no":"4-5-1","level":"★3","text":"・全てのファイアウォール(又はファイアウォール機能を持つネットワーク機器)について、インバウンド通信に関するファイアウォール・ルールが定められていること。","source_row":135},{"no":"4-5-1-6","req_no":"4-5-1","level":"★3","text":"・全てのファイアウォール(又はファイアウォール機能を持つネットワーク機器)について、不要になったファイアウォール・ルールを速やかに削除又は無効化すること。","source_row":136},{"no":"4-5-1-7","req_no":"4-5-1","level":"★3","text":"・ファイアウォール・ルールの変更をインターネット経由で行う場合、No.4-1-3-3で示す認証要素を利用した多要素認証を適用するか、又は信頼できるIPアドレスにアクセスを制限すること。","source_row":137},{"no":"4-5-1-8","req_no":"4-5-1","level":"★4","text":"・利用中のOSが対応していない場合を除いて、すべてのパソコン及びサーバにおいて、ソフトウェアファイアウォールを有効化すること。","source_row":138},{"no":"4-5-1-9","req_no":"4-5-1","level":"★4","text":"・社外公開サーバ及び重要な機密情報を扱うサーバについて、それぞれ専用のネットワークセグメントに設置し、セグメント内外のアクセスを必要最小限に限定すること。","source_row":139},{"no":"5-1-1-1","req_no":"5-1-1","level":"★3","text":"・社内外ネットワークの境界又は端末において、インターネットから社内への通信及び社内から不正なサーバへの通信の双方について、不正アクセスをリアルタイム検知・遮断する仕組みを導入すること。","source_row":140},{"no":"5-1-1-2","req_no":"5-1-1","level":"★3","text":"・ネットワーク機器のログ及びアラートを分析し、セキュリティ担当部署の担当者又は管理者により不審な事象が発見された場合に、それがセキュリティインシデントに該当するかが判断されること。","source_row":141},{"no":"5-1-1-3","req_no":"5-1-1","level":"★3","text":"・No.5-1-1-1で設置したネットワーク機器又はサービスについて、以下の要件を満たす異常時に通知する仕組みを導入すること。\n-アラートが速やかに発報されること。\n-インシデントの速報レポートが作成され、通知されること。","source_row":142},{"no":"5-1-2-1","req_no":"5-1-2","level":"★4","text":"・会社支給のパソコンを対象に、社内で利用を許可するソフトウェアの一覧を作成すること。","source_row":143},{"no":"5-1-2-2","req_no":"5-1-2","level":"★4","text":"・年1回以上の頻度で会社支給のパソコンにおけるソフトウェアのインストール状況について点検すること。","source_row":144},{"no":"5-1-2-3","req_no":"5-1-2","level":"★4","text":"・外部から受け取ったファイルについて安全性を確認するため、マルウェア対策ソフトのリアルタイムスキャンを実行する、又は仮想環境上で安全性を確認する仕組みを整備する。","source_row":145},{"no":"5-2-1-1","req_no":"5-2-1","level":"★4","text":"・自社におけるセキュリティインシデントのレベル及びレベルごとの対象範囲を定め、役員、従業員、派遣社員及び受入出向者に周知すること。","source_row":146},{"no":"5-2-1-2","req_no":"5-2-1","level":"★4","text":"・No.4-4-3-3において不審な認証試行を検知した場合又はNo.5-1-1-1で導入されるネットワーク機器若しくはサービスからのアラートを受け取った場合は、No.5-2-1-1で定めたレベル及び対象範囲に基づき、どのレベルのインシデントに該当するかを分析し、判断すること。","source_row":147},{"no":"6-1-1-1","req_no":"6-1-1","level":"★3","text":"・以下の手順を含んだセキュリティインシデントへの対応手順を定めること。\n①発見報告、 ②初動、③調査・対応、④復旧、⑤最終報告","source_row":148},{"no":"6-1-1-2","req_no":"6-1-1","level":"★3","text":"・セキュリティインシデント発生時における社内外組織(関係当局及び所管省庁を含む。)の連絡先及び報告・情報共有ルートを定めること。","source_row":149},{"no":"6-1-1-3","req_no":"6-1-1","level":"★3","text":"・セキュリティインシデント発生時におけるセキュリティを統括する役員(例えば、CISOを設置する会社の場合は、当該CISO)及びセキュリティ担当部署の役割・責任を定めること。","source_row":150},{"no":"6-1-1-4","req_no":"6-1-1","level":"★3","text":"・年1回以上の頻度でNo.6-1-1-2及びNo.6-1-1-3にて定めたセキュリティインシデント発生時の体制について点検すること。","source_row":151},{"no":"6-1-1-5","req_no":"6-1-1","level":"★3","text":"・セキュリティインシデントの報告フォーマットを整備すること。","source_row":152},{"no":"6-1-1-6","req_no":"6-1-1","level":"★3","text":"・年１回以上及び社内外で重大なセキュリティインシデントが発生した際に、インシデント事例及びその対応策を社内部署へ共有していること。","source_row":153},{"no":"7-1-1-1","req_no":"7-1-1","level":"★3","text":"・事業継続上重要なシステムについて、サイバー攻撃を念頭に、業務の目標復旧レベルを定めたうえで、当該レベルまで業務を回復するために必要な対策を、以下の例を参考として整備すること。\n[復旧のための対策(例)]\n- システムによる業務継続(例:予備機、クラウド環境等により待機系を整備する。)\n- 人手による業務継続(例:電話、FAX等による連絡又は業務の実施に備え、影響のある取引先の連絡先及び複数の連絡手段を整備する。)","source_row":154},{"no":"7-1-1-2","req_no":"7-1-1","level":"★4","text":"・事業継続上重要なシステムについて、サイバー攻撃を念頭に、以下の対策を構じること。\n- 目標復旧時点への復旧ができるようにNo.4-3-4-1及びNo.4-3-4-2で取得したバックアップを保管すること。\n- No.4-3-4-3で定めたリストア手順書どおりに、かつ、目標復旧時間内でバックアップの復元ができることを確認すること。","source_row":155}]}</script>
+<script id="scs-samples" type="application/json">[{"format":"scs-star3-selfcheck","formatVersion":1,"requirementsSha256":"d4c27aa4bfed5521a98ff9ce8c042743e4204e4b8310ceb3df0c54eabfdc8dd1","savedAt":"2026-10-27T00:00:00.000Z","org":{"name":"（架空）見本町役場","kind":"地方公共団体","assessor":"総務課 情報担当 見本 太郎（架空）","date":"2026-10-20","expert":"","scope":"本庁舎の行政事務（住民情報系・内部情報系）。教育委員会と公営企業は今回の範囲外。"},"checks":{"1-2-1-1":{"status":"done","memo":"情報セキュリティポリシー第3条で、最高情報セキュリティ責任者（副町長）と総務課情報担当の役割を定めている。","evidence":"例規集「見本町情報セキュリティポリシー」第3条"},"1-2-1-2":{"status":"done","memo":"","evidence":""},"1-2-1-3":{"status":"partial","memo":"体制の点検は情報セキュリティ委員会で行っているが、令和7年度は開催していない。","evidence":"情報セキュリティ委員会の議事録（総務課 共有フォルダ）"},"1-2-3-1":{"status":"done","memo":"","evidence":""},"1-2-3-2":{"status":"done","memo":"","evidence":""},"1-3-1-1":{"status":"done","memo":"","evidence":""},"1-3-1-2":{"status":"done","memo":"","evidence":""},"1-3-1-3":{"status":"done","memo":"","evidence":""},"2-1-1-1":{"status":"partial","memo":"外部サービス・委託先台帳を今回作り始めた。教育委員会が契約しているサービスはまだ載っていない。","evidence":"本ツールの外部サービス・委託先台帳"},"2-1-1-2":{"status":"todo","memo":"年1回の点検の仕組みはまだない。","evidence":""},"2-1-2-1":{"status":"partial","memo":"住民情報システムの委託契約には取り決めがある。グループウェアは利用規約のみ。","evidence":"契約書の保管場所：総務課 契約書ファイル"},"2-1-4-1":{"status":"done","memo":"","evidence":""},"3-1-1-1":{"status":"done","memo":"","evidence":""},"3-1-1-2":{"status":"done","memo":"","evidence":""},"3-1-1-3":{"status":"done","memo":"","evidence":""},"3-1-1-4":{"status":"done","memo":"","evidence":""},"3-1-2-1":{"status":"done","memo":"","evidence":""},"3-1-2-2":{"status":"done","memo":"","evidence":""},"3-1-3-1":{"status":"partial","memo":"住民情報を扱うサービスには調達時の要件があるが、それ以外のクラウドサービスには要件がない。","evidence":"調達仕様書（住民情報システム）"},"3-1-3-2":{"status":"partial","memo":"台帳の「契約書のセキュリティ条項」が「あり」でないサービスが2件ある。","evidence":"本ツールの外部サービス・委託先台帳"},"3-1-4-1":{"status":"done","memo":"","evidence":""},"3-1-4-2":{"status":"done","memo":"","evidence":""},"3-1-4-3":{"status":"done","memo":"","evidence":""},"4-1-1-1":{"status":"done","memo":"","evidence":""},"4-1-1-2":{"status":"done","memo":"","evidence":""},"4-1-1-3":{"status":"done","memo":"","evidence":""},"4-1-1-4":{"status":"done","memo":"","evidence":""},"4-1-2-1":{"status":"done","memo":"","evidence":""},"4-1-2-2":{"status":"done","memo":"","evidence":""},"4-1-2-3":{"status":"done","memo":"","evidence":""},"4-1-2-4":{"status":"na","memo":"町で開発環境を持っていない（システム開発はすべて委託しており、開発環境は委託先にある）。","evidence":""},"4-1-2-5":{"status":"done","memo":"","evidence":""},"4-1-2-6":{"status":"done","memo":"","evidence":""},"4-1-2-7":{"status":"done","memo":"","evidence":""},"4-1-2-8":{"status":"done","memo":"","evidence":""},"4-1-3-1":{"status":"done","memo":"","evidence":""},"4-1-3-2":{"status":"partial","memo":"グループウェアは管理者だけ多要素認証を設定している。電子申請サービスは設定状況を確認中。","evidence":"グループウェア管理画面の設定画面の写し"},"4-1-3-3":{"status":"done","memo":"","evidence":""},"4-1-3-4":{"status":"done","memo":"","evidence":""},"4-1-4-1":{"status":"done","memo":"","evidence":""},"4-1-4-2":{"status":"done","memo":"","evidence":""},"4-1-5-1":{"status":"done","memo":"","evidence":""},"4-1-5-2":{"status":"done","memo":"","evidence":""},"4-1-5-3":{"status":"done","memo":"","evidence":""},"4-1-5-4":{"status":"done","memo":"","evidence":""},"4-1-5-5":{"status":"done","memo":"","evidence":""},"4-1-6-1":{"status":"done","memo":"","evidence":""},"4-1-6-2":{"status":"done","memo":"","evidence":""},"4-1-6-3":{"status":"done","memo":"","evidence":""},"4-1-7-1":{"status":"done","memo":"","evidence":""},"4-2-2-1":{"status":"done","memo":"","evidence":""},"4-2-2-2":{"status":"done","memo":"","evidence":""},"4-2-2-3":{"status":"done","memo":"","evidence":""},"4-3-4-1":{"status":"done","memo":"","evidence":""},"4-3-4-2":{"status":"todo","memo":"庁内ファイルサーバの遠隔地バックアップをしていない。","evidence":""},"4-3-4-3":{"status":"partial","memo":"住民情報システムは運用センターに手順書がある。ファイルサーバは手順書がない。","evidence":""},"4-4-1-1":{"status":"done","memo":"","evidence":""},"4-4-1-2":{"status":"done","memo":"","evidence":""},"4-4-1-3":{"status":"done","memo":"","evidence":""},"4-4-4-1":{"status":"done","memo":"","evidence":""},"4-4-4-2":{"status":"partial","memo":"パソコンは自動更新。ネットワーク機器は保守業者が年2回まとめて更新しており、14日以内になっていない。","evidence":"保守作業報告書"},"4-4-5-1":{"status":"done","memo":"","evidence":""},"4-4-5-2":{"status":"done","memo":"","evidence":""},"4-4-5-3":{"status":"done","memo":"","evidence":""},"4-5-1-1":{"status":"done","memo":"","evidence":""},"4-5-1-2":{"status":"done","memo":"","evidence":""},"4-5-1-3":{"status":"done","memo":"","evidence":""},"4-5-1-4":{"status":"done","memo":"","evidence":""},"5-1-1-1":{"status":"done","memo":"","evidence":""},"5-1-1-2":{"status":"todo","memo":"ログを見て判断する担当と手順が決まっていない。","evidence":""},"6-1-1-1":{"status":"done","memo":"インシデント対応手順を定めている。","evidence":"情報セキュリティ対策基準 別紙「インシデント対応手順」"},"6-1-1-2":{"status":"done","memo":"","evidence":""},"6-1-1-3":{"status":"done","memo":"","evidence":""},"6-1-1-4":{"status":"todo","memo":"体制の年1回の点検はしていない。","evidence":""},"6-1-1-5":{"status":"done","memo":"","evidence":""},"6-1-1-6":{"status":"done","memo":"","evidence":""},"7-1-1-1":{"status":"partial","memo":"住民情報システムの目標復旧レベルは決めた。他のシステムは業務切替表を作成中。","evidence":"本ツールの停止時の業務切替表"}},"services":[{"id":"s-town-1","name":"住民情報システム（共同利用型）","provider":"（架空）県内自治体共同運用センター／運用委託：甲情報サービス（架空）","dataTypes":"住民基本台帳、税、国民健康保険の情報","volume":"1万〜10万件","admin":"住民課 システム担当係長","mfa":"あり（全員）","contractClause":"あり","impactedOps":"窓口での証明書発行、転入転出の手続き、税の賦課"},{"id":"s-town-2","name":"庁内グループウェア（クラウド型）","provider":"（架空）乙クラウド株式会社","dataTypes":"職員のメール、予定表、庁内の文書","volume":"100〜1,000件","admin":"総務課 情報担当","mfa":"一部の人だけ","contractClause":"契約書なし（利用規約のみ）","impactedOps":"庁内の連絡、会議の日程調整"},{"id":"s-town-3","name":"電子申請サービス","provider":"（架空）丙システムズ株式会社","dataTypes":"申請者の氏名・住所・連絡先、申請内容","volume":"1,000〜1万件","admin":"企画課 デジタル推進担当","mfa":"不明","contractClause":"あり","impactedOps":"子育て・福祉の各種申請の受付"},{"id":"s-town-4","name":"庁内ネットワーク保守","provider":"（架空）丁通信サービス株式会社","dataTypes":"ネットワーク機器の設定情報（住民の情報は預けていない）","volume":"不明","admin":"総務課 情報担当","mfa":"なし","contractClause":"なし","impactedOps":"庁内のすべての業務（ネットワークが止まった場合）"}],"fallbacks":[{"id":"f-town-1","operation":"住民票の写し等の証明書発行","serviceIds":["s-town-1"],"alternative":"窓口で申請書を受け付けて番号札を渡し、復旧後に順番に発行する。急ぎの人には他の手段（郵送請求など）を案内する。","decider":"住民課長（不在時は課長補佐）","contact":"住民課 内線101／共同運用センター 運用窓口（番号は課内掲示）","restoreChecks":"受付済み申請の件数と発行件数が合っているか。停止中に受け付けた転入届の入力漏れがないか。"},{"id":"f-town-2","operation":"子育て支援の電子申請受付","serviceIds":["s-town-3"],"alternative":"町ウェブサイトに停止の案内を掲示し、紙の申請書（窓口・郵送）で受け付ける。","decider":"企画課長","contact":"企画課 内線203","restoreChecks":""},{"id":"f-town-3","operation":"庁内の連絡・会議調整","serviceIds":["s-town-2","s-town-4"],"alternative":"庁内電話と紙の回覧に切り替える。","decider":"","contact":"","restoreChecks":"停止中の回覧文書を電子化して共有フォルダへ戻す。"}]},{"format":"scs-star3-selfcheck","formatVersion":1,"requirementsSha256":"d4c27aa4bfed5521a98ff9ce8c042743e4204e4b8310ceb3df0c54eabfdc8dd1","savedAt":"2026-10-27T00:00:00.000Z","org":{"name":"（架空）サンプル精密工業株式会社","kind":"中小企業","assessor":"総務部 見本 花子（架空）","date":"2026-10-22","expert":"","scope":"本社工場（従業員40名）の事務・技術・生産管理の業務とIT基盤。"},"checks":{"1-2-1-1":{"status":"partial","memo":"社長がセキュリティの責任者であることは決めているが、文書になっていない。","evidence":""},"1-2-1-2":{"status":"partial","memo":"","evidence":""},"1-2-1-3":{"status":"partial","memo":"","evidence":""},"1-2-3-1":{"status":"partial","memo":"","evidence":""},"1-2-3-2":{"status":"partial","memo":"","evidence":""},"1-3-1-1":{"status":"done","memo":"情報セキュリティ基本方針を定めた。","evidence":"社内共有フォルダ「規程」"},"1-3-1-2":{"status":"done","memo":"","evidence":""},"1-3-1-3":{"status":"partial","memo":"","evidence":""},"2-1-1-1":{"status":"partial","memo":"","evidence":""},"2-1-1-2":{"status":"partial","memo":"","evidence":""},"2-1-2-1":{"status":"partial","memo":"主要な発注元2社とは秘密保持契約がある。外注先とは取り決めがない。","evidence":"秘密保持契約書（総務部 金庫）"},"2-1-4-1":{"status":"todo","memo":"インシデント時の役割分担を取引先と決めていない。","evidence":""},"3-1-1-1":{"status":"partial","memo":"","evidence":""},"3-1-1-2":{"status":"partial","memo":"","evidence":""},"3-1-1-3":{"status":"partial","memo":"","evidence":""},"3-1-1-4":{"status":"partial","memo":"","evidence":""},"3-1-2-1":{"status":"partial","memo":"","evidence":""},"3-1-2-2":{"status":"partial","memo":"","evidence":""},"3-1-3-1":{"status":"todo","memo":"クラウドサービスを使う前の確認項目がない。担当者がそれぞれ申し込んでいる。","evidence":""},"3-1-3-2":{"status":"todo","memo":"図面共有サービスは利用規約に同意しただけで、合意書はない。","evidence":"本ツールの外部サービス・委託先台帳"},"3-1-4-1":{"status":"partial","memo":"","evidence":""},"3-1-4-2":{"status":"partial","memo":"","evidence":""},"3-1-4-3":{"status":"partial","memo":"","evidence":""},"4-1-1-1":{"status":"done","memo":"","evidence":""},"4-1-1-2":{"status":"partial","memo":"","evidence":""},"4-1-1-3":{"status":"done","memo":"","evidence":""},"4-1-1-4":{"status":"partial","memo":"","evidence":""},"4-1-2-1":{"status":"partial","memo":"","evidence":""},"4-1-2-2":{"status":"partial","memo":"","evidence":""},"4-1-2-3":{"status":"partial","memo":"","evidence":""},"4-1-2-4":{"status":"na","memo":"自社で開発環境を持っていない。","evidence":""},"4-1-2-5":{"status":"partial","memo":"","evidence":""},"4-1-2-6":{"status":"partial","memo":"","evidence":""},"4-1-2-7":{"status":"partial","memo":"","evidence":""},"4-1-2-8":{"status":"partial","memo":"","evidence":""},"4-1-3-1":{"status":"partial","memo":"","evidence":""},"4-1-3-2":{"status":"todo","memo":"図面共有サービスで多要素認証を使っていない。","evidence":"本ツールの外部サービス・委託先台帳"},"4-1-3-3":{"status":"partial","memo":"","evidence":""},"4-1-3-4":{"status":"partial","memo":"","evidence":""},"4-1-4-1":{"status":"partial","memo":"","evidence":""},"4-1-4-2":{"status":"done","memo":"","evidence":""},"4-1-5-1":{"status":"partial","memo":"","evidence":""},"4-1-5-2":{"status":"partial","memo":"","evidence":""},"4-1-5-3":{"status":"partial","memo":"","evidence":""},"4-1-5-4":{"status":"partial","memo":"","evidence":""},"4-1-5-5":{"status":"partial","memo":"","evidence":""},"4-1-6-1":{"status":"partial","memo":"","evidence":""},"4-1-6-2":{"status":"partial","memo":"","evidence":""},"4-1-7-1":{"status":"partial","memo":"","evidence":""},"4-2-2-1":{"status":"partial","memo":"","evidence":""},"4-2-2-2":{"status":"partial","memo":"","evidence":""},"4-3-4-1":{"status":"partial","memo":"","evidence":""},"4-3-4-2":{"status":"partial","memo":"会計データはサービス側で保管。図面は社内NASだけにあり、遠隔地バックアップがない。","evidence":""},"4-3-4-3":{"status":"partial","memo":"","evidence":""},"4-4-1-1":{"status":"partial","memo":"","evidence":""},"4-4-1-2":{"status":"partial","memo":"","evidence":""},"4-4-1-3":{"status":"partial","memo":"","evidence":""},"4-4-4-1":{"status":"partial","memo":"","evidence":""},"4-4-4-2":{"status":"partial","memo":"","evidence":""},"4-4-5-1":{"status":"done","memo":"","evidence":""},"4-4-5-2":{"status":"partial","memo":"","evidence":""},"4-4-5-3":{"status":"done","memo":"","evidence":""},"4-5-1-1":{"status":"partial","memo":"","evidence":""},"4-5-1-2":{"status":"partial","memo":"","evidence":""},"5-1-1-1":{"status":"partial","memo":"ルーターの機能で外からの通信は遮断している。社内から不正なサーバへの通信の検知はしていない。","evidence":"ルーター設定画面の写し"},"5-1-1-2":{"status":"todo","memo":"","evidence":""},"5-1-1-3":{"status":"todo","memo":"","evidence":""},"6-1-1-1":{"status":"partial","memo":"連絡先一覧はあるが、対応の手順書はない。","evidence":""},"6-1-1-2":{"status":"partial","memo":"","evidence":""},"6-1-1-3":{"status":"partial","memo":"","evidence":""},"6-1-1-4":{"status":"partial","memo":"","evidence":""},"6-1-1-5":{"status":"todo","memo":"","evidence":""},"6-1-1-6":{"status":"partial","memo":"","evidence":""},"7-1-1-1":{"status":"partial","memo":"出荷と図面受け取りは停止時の業務切替表を作った。会計は未検討。","evidence":"本ツールの停止時の業務切替表"}},"services":[{"id":"s-co-1","name":"クラウド会計サービス","provider":"（架空）会計クラウドA社","dataTypes":"取引先の口座情報、請求・支払の記録","volume":"1,000〜1万件","admin":"経理部長","mfa":"あり（全員）","contractClause":"契約書なし（利用規約のみ）","impactedOps":"請求書発行、支払処理、月次決算"},{"id":"s-co-2","name":"取引先との図面共有サービス","provider":"（架空）ファイル共有B社","dataTypes":"発注元から預かった図面・仕様書（機密）","volume":"100〜1,000件","admin":"技術部 課長","mfa":"なし","contractClause":"不明","impactedOps":"発注元からの図面受け取り、試作品の製作"},{"id":"s-co-3","name":"生産管理システムの保守委託","provider":"（架空）システム保守C社","dataTypes":"受注・生産計画・在庫の情報","volume":"1万〜10万件","admin":"生産管理課 主任","mfa":"不明","contractClause":"あり","impactedOps":"生産計画、出荷"}],"fallbacks":[{"id":"f-co-1","operation":"発注元からの図面受け取り","serviceIds":["s-co-2"],"alternative":"発注元の担当者に連絡し、発注元が指定する方法（発注元のサービス、暗号化した媒体の手渡し）に切り替える。","decider":"技術部長","contact":"技術部長 携帯（社内連絡網に記載）／発注元の窓口は取引先一覧に記載","restoreChecks":"停止中に受け取った図面を保管場所に戻したか。共有サービスに不審なアクセス記録がないか。"},{"id":"f-co-2","operation":"出荷","serviceIds":["s-co-3"],"alternative":"前日に印刷しておく出荷予定表をもとに、手書きの出荷伝票で出荷する。","decider":"生産管理課長","contact":"生産管理課 内線30／保守C社 障害受付（番号は保守契約書に記載）","restoreChecks":"手書き伝票の内容をシステムに入力し、在庫数が実数と合うか確認する。"}]}]</script>
+<script>
+"use strict";
+const REQ = JSON.parse(document.getElementById("scs-requirements").textContent);
+const SAMPLES = JSON.parse(document.getElementById("scs-samples").textContent || "[]");
+const FORMAT = "scs-star3-selfcheck";
+const FORMAT_VERSION = 1;
+
+const STATUSES = [
+  { v: "done", label: "対応済み" },
+  { v: "partial", label: "一部対応" },
+  { v: "todo", label: "未対応" },
+  { v: "na", label: "対象外" },
+];
+const STATUS_LABEL = { done: "対応済み", partial: "一部対応", todo: "未対応", na: "対象外", "": "未回答" };
+
+// 台帳・切替表を参照する要求事項。番号と分野の対応は発注時の指定による
+// （3-1-3 外部情報サービスの管理／分野2 取引先管理 → 台帳、分野6・7 インシデント対応・復旧 → 切替表）。
+const LEDGER_REQ_NOS = ["3-1-3"];
+const LEDGER_DOMAINS = ["2"];
+const FALLBACK_DOMAINS = ["6", "7"];
+
+const LEDGER_COLS = [
+  { key: "name", label: "サービス名", type: "text" },
+  { key: "provider", label: "提供元・委託先", type: "text" },
+  { key: "dataTypes", label: "預けているデータの種類", type: "textarea" },
+  { key: "volume", label: "件数の規模", type: "select",
+    options: ["100件未満", "100〜1,000件", "1,000〜1万件", "1万〜10万件", "10万件以上", "不明"] },
+  { key: "admin", label: "管理画面のアカウント管理者", type: "text" },
+  { key: "mfa", label: "多要素認証（パスワード以外の確認手段）", type: "select",
+    options: ["あり（全員）", "一部の人だけ", "なし", "不明"] },
+  { key: "contractClause", label: "契約書のセキュリティ条項", type: "select",
+    options: ["あり", "なし", "契約書なし（利用規約のみ）", "不明"] },
+  { key: "impactedOps", label: "止まったときに影響する業務", type: "textarea" },
+];
+const FALLBACK_COLS = [
+  { key: "operation", label: "業務名", type: "text" },
+  { key: "serviceIds", label: "頼っているサービス（台帳から選択）", type: "services" },
+  { key: "alternative", label: "止まったときの代わりの回し方", type: "textarea" },
+  { key: "decider", label: "切り替えを決める人", type: "text" },
+  { key: "contact", label: "連絡先", type: "textarea" },
+  { key: "restoreChecks", label: "戻すときの確認事項", type: "textarea" },
+];
+
+const reqByNo = Object.fromEntries(REQ.requirements.map(q => [q.no, q]));
+const STAR3_CRITS = REQ.criteria.filter(c => c.level === "★3");
+const STAR3_REQS = REQ.requirements.filter(q => q.star3);
+const critsOf = no => STAR3_CRITS.filter(c => c.req_no === no);
+
+let state = emptyState();
+let dirty = false;
+
+function emptyState() {
+  return {
+    format: FORMAT, formatVersion: FORMAT_VERSION,
+    requirementsSha256: REQ.source.sha256, savedAt: null,
+    org: { name: "", kind: "", assessor: "", date: "", expert: "", scope: "" },
+    checks: {}, services: [], fallbacks: [],
+  };
+}
+
+function esc(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+}
+function newId(prefix) {
+  return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+function check(no) { return state.checks[no] || { status: "", memo: "", evidence: "" }; }
+function setCheck(no, field, value) {
+  const c = Object.assign({ status: "", memo: "", evidence: "" }, state.checks[no]);
+  c[field] = value;
+  state.checks[no] = c;
+  markDirty();
+}
+function markDirty() { dirty = true; }
+function serviceName(id) {
+  const s = state.services.find(x => x.id === id);
+  return s ? (s.name || "（名前未記入のサービス）") : null;
+}
+
+/* ---------- 集計 ---------- */
+function tally(crits) {
+  const t = { done: 0, partial: 0, todo: 0, na: 0, none: 0, total: crits.length };
+  crits.forEach(c => { const s = check(c.no).status; t[s || "none"]++; });
+  return t;
+}
+function ledgerStatus() {
+  const rows = state.services;
+  const complete = rows.filter(r => LEDGER_COLS.every(col => String(r[col.key] || "").trim()));
+  const weakMfa = rows.filter(r => r.mfa && r.mfa !== "あり（全員）");
+  const noMfaAnswer = rows.filter(r => !r.mfa);
+  const weakContract = rows.filter(r => r.contractClause && r.contractClause !== "あり");
+  const usedIds = new Set(state.fallbacks.flatMap(f => f.serviceIds || []));
+  const noFallback = rows.filter(r => String(r.impactedOps || "").trim() && !usedIds.has(r.id));
+  return { rows, complete, weakMfa, noMfaAnswer, weakContract, noFallback };
+}
+function fallbackStatus() {
+  const rows = state.fallbacks;
+  const complete = rows.filter(r => FALLBACK_COLS.every(col =>
+    col.type === "services" ? (r.serviceIds || []).length > 0 : String(r[col.key] || "").trim()));
+  const noDecider = rows.filter(r => !String(r.decider || "").trim() || !String(r.contact || "").trim());
+  return { rows, complete, noDecider };
+}
+
+/* ---------- 1. 基本情報 ---------- */
+function renderOrg() {
+  document.querySelectorAll("[data-org]").forEach(el => { el.value = state.org[el.dataset.org] || ""; });
+  renderHeader();
+}
+function renderHeader() {
+  document.getElementById("hdr-org").textContent = state.org.name ? "点検対象：" + state.org.name : "";
+}
+document.getElementById("org-form").addEventListener("input", e => {
+  const key = e.target.dataset.org;
+  if (!key) return;
+  state.org[key] = e.target.value;
+  markDirty();
+  if (key === "name") renderHeader();
+});
+
+/* ---------- 2. 点検表 ---------- */
+function renderProgress() {
+  const rows = REQ.domains.map(d => {
+    const crits = STAR3_CRITS.filter(c => reqByNo[c.req_no].domain_no === d.no);
+    if (!crits.length) return "";
+    return progressRow(d.no + ". " + d.name, tally(crits));
+  }).join("");
+  document.getElementById("progress").innerHTML =
+    '<table class="progress-table"><thead><tr><th>分野</th><th>進み具合</th><th class="num">回答済み</th><th class="num">対応済み</th><th class="num">一部対応</th><th class="num">未対応</th><th class="num">対象外</th></tr></thead><tbody>' +
+    rows + progressRow("合計", tally(STAR3_CRITS), true) + "</tbody></table>";
+}
+function progressRow(label, t, bold) {
+  const pct = n => t.total ? (100 * n / t.total) + "%" : "0";
+  const answered = t.total - t.none;
+  const b = bold ? ' style="font-weight:bold"' : "";
+  return `<tr${b}><td>${esc(label)}</td><td><div class="bar" role="img" aria-label="${esc(label)}：${t.total}項目中 対応済み${t.done}、一部対応${t.partial}、未対応${t.todo}、対象外${t.na}、未回答${t.none}">` +
+    `<span class="done" style="width:${pct(t.done)}"></span><span class="partial" style="width:${pct(t.partial)}"></span>` +
+    `<span class="todo" style="width:${pct(t.todo)}"></span><span class="na" style="width:${pct(t.na)}"></span></div></td>` +
+    `<td class="num">${answered} / ${t.total}</td><td class="num">${t.done}</td><td class="num">${t.partial}</td><td class="num">${t.todo}</td><td class="num">${t.na}</td></tr>`;
+}
+
+function renderChecklist() {
+  let html = "";
+  let lastDomain = null;
+  STAR3_REQS.forEach(q => {
+    if (q.domain_no !== lastDomain) {
+      const d = REQ.domains.find(x => x.no === q.domain_no);
+      html += `<div class="domain-head">分野 ${esc(d.no)}. ${esc(d.name)}</div>`;
+      lastDomain = q.domain_no;
+    }
+    html += `<div class="req" id="req-${esc(q.no)}"><div class="req-head">` +
+      `<div><span class="req-no">要求事項 ${esc(q.no)}</span><span class="req-title">${esc(q.title)}</span></div>` +
+      `<p class="req-text">${esc(q.text)}</p>` +
+      `<div class="req-meta">中分類 ${esc(q.category_no)} ${esc(q.category)}${q.nist_csf ? "／NIST CSF（米国のセキュリティ対策の枠組み）の機能：" + esc(q.nist_csf) : ""}</div></div>` +
+      `<div class="linked-slot" data-linked="${esc(q.no)}"></div>`;
+    critsOf(q.no).forEach(c => {
+      const ck = check(c.no);
+      const name = "st-" + c.no;
+      html += `<div class="crit" data-crit-row="${esc(c.no)}">` +
+        `<div><span class="crit-no">評価基準 ${esc(c.no)}</span></div>` +
+        `<div class="crit-text">${esc(c.text)}</div>` +
+        `<fieldset class="status-group"><legend>対応状況</legend>` +
+        STATUSES.map(s => `<label><input type="radio" name="${esc(name)}" value="${s.v}" data-crit="${esc(c.no)}" data-field="status"${ck.status === s.v ? " checked" : ""}><span>${s.label}</span></label>`).join("") +
+        `<button type="button" class="btn" style="font-size:12px;padding:2px 8px" data-action="clear-status" data-crit="${esc(c.no)}">選択を外す</button></fieldset>` +
+        `<div class="crit-fields">` +
+        `<label><span>根拠メモ（なぜそう判断したか）</span><textarea data-crit="${esc(c.no)}" data-field="memo">${esc(ck.memo)}</textarea></label>` +
+        `<label><span>証跡の置き場所（証拠となる文書や画面がどこにあるか）</span><textarea data-crit="${esc(c.no)}" data-field="evidence">${esc(ck.evidence)}</textarea></label>` +
+        `</div><div class="warn" data-na-warn="${esc(c.no)}"></div></div>`;
+    });
+    html += "</div>";
+  });
+  document.getElementById("checklist").innerHTML = html;
+  STAR3_CRITS.forEach(c => updateNaWarn(c.no));
+  renderLinkedPanels();
+  applyFilter();
+}
+
+function linkedKind(q) {
+  if (LEDGER_REQ_NOS.includes(q.no) || LEDGER_DOMAINS.includes(q.domain_no)) return "ledger";
+  if (FALLBACK_DOMAINS.includes(q.domain_no)) return "fallback";
+  return null;
+}
+function linkedPanelHtml(kind) {
+  if (kind === "ledger") {
+    const s = ledgerStatus();
+    if (!s.rows.length) return `<div class="linked"><strong>外部サービス・委託先台帳の記入状況：</strong>まだ1行も書かれていません。<button type="button" class="btn" data-goto="ledger">台帳を開く</button></div>`;
+    const items = [
+      `登録 ${s.rows.length} 件（全項目記入済み ${s.complete.length} 件）`,
+      `多要素認証が「あり（全員）」でない：${s.weakMfa.length} 件${s.noMfaAnswer.length ? `、未記入 ${s.noMfaAnswer.length} 件` : ""}`,
+      `契約書のセキュリティ条項が「あり」でない：${s.weakContract.length} 件`,
+      `止まったときの影響業務があるのに、切替表に載っていない：${s.noFallback.length} 件`,
+    ];
+    return `<div class="linked"><strong>外部サービス・委託先台帳の記入状況</strong><ul>${items.map(i => "<li>" + esc(i) + "</li>").join("")}</ul><button type="button" class="btn" data-goto="ledger">台帳を開く</button></div>`;
+  }
+  if (kind === "fallback") {
+    const s = fallbackStatus();
+    if (!s.rows.length) return `<div class="linked"><strong>停止時の業務切替表の記入状況：</strong>まだ1行も書かれていません。<button type="button" class="btn" data-goto="fallback">切替表を開く</button></div>`;
+    const items = [
+      `登録 ${s.rows.length} 業務（全項目記入済み ${s.complete.length} 業務）`,
+      `切り替えを決める人・連絡先が空欄：${s.noDecider.length} 業務`,
+      `台帳で影響業務があるのに切替表に載っていないサービス：${ledgerStatus().noFallback.length} 件`,
+    ];
+    return `<div class="linked"><strong>停止時の業務切替表の記入状況</strong><ul>${items.map(i => "<li>" + esc(i) + "</li>").join("")}</ul><button type="button" class="btn" data-goto="fallback">切替表を開く</button></div>`;
+  }
+  return "";
+}
+function renderLinkedPanels() {
+  document.querySelectorAll("[data-linked]").forEach(slot => {
+    slot.innerHTML = linkedPanelHtml(linkedKind(reqByNo[slot.dataset.linked]));
+  });
+}
+function updateNaWarn(no) {
+  const el = document.querySelector(`[data-na-warn="${CSS.escape(no)}"]`);
+  if (!el) return;
+  const ck = check(no);
+  el.textContent = ck.status === "na" && !ck.memo.trim() ? "対象外とした理由を根拠メモに書いてください。" : "";
+}
+function applyFilter() {
+  const mode = document.getElementById("filter").value;
+  document.querySelectorAll("[data-crit-row]").forEach(row => {
+    const st = check(row.dataset.critRow).status;
+    const show = mode === "all" || (mode === "unanswered" && !st) || (mode === "open" && (st === "todo" || st === "partial"));
+    row.classList.toggle("hidden", !show);
+  });
+}
+const checklistEl = document.getElementById("checklist");
+checklistEl.addEventListener("change", e => {
+  const t = e.target;
+  if (t.dataset.field === "status") {
+    setCheck(t.dataset.crit, "status", t.value);
+    updateNaWarn(t.dataset.crit);
+    renderProgress();
+  }
+});
+checklistEl.addEventListener("input", e => {
+  const t = e.target;
+  if (t.dataset.field === "memo" || t.dataset.field === "evidence") {
+    setCheck(t.dataset.crit, t.dataset.field, t.value);
+    if (t.dataset.field === "memo") updateNaWarn(t.dataset.crit);
+  }
+});
+document.getElementById("filter").addEventListener("change", applyFilter);
+
+/* ---------- 3. 台帳 / 4. 切替表 ---------- */
+function cellInput(col, row, kind) {
+  const attrs = `data-${kind}="${esc(row.id)}" data-key="${col.key}" aria-label="${esc(col.label)}"`;
+  const val = row[col.key] || "";
+  if (col.type === "textarea") return `<textarea ${attrs}>${esc(val)}</textarea>`;
+  if (col.type === "select") {
+    const opts = col.options.includes(val) || !val ? col.options : [val].concat(col.options);
+    return `<select ${attrs}><option value=""></option>${opts.map(o => `<option${o === val ? " selected" : ""}>${esc(o)}</option>`).join("")}</select>`;
+  }
+  if (col.type === "services") {
+    if (!state.services.length) return `<span class="note">台帳にサービスがありません</span>`;
+    const chosen = new Set(row.serviceIds || []);
+    return `<div class="svc-pick" role="group" aria-label="${esc(col.label)}">` + state.services.map(s =>
+      `<label><input type="checkbox" data-fallback-svc="${esc(row.id)}" value="${esc(s.id)}"${chosen.has(s.id) ? " checked" : ""}> ${esc(s.name || "（名前未記入）")}${s.provider ? "（" + esc(s.provider) + "）" : ""}</label>`).join("") + `</div>`;
+  }
+  return `<input type="text" ${attrs} value="${esc(val)}">`;
+}
+function renderLedger() {
+  const head = `<thead><tr><th>No.</th>${LEDGER_COLS.map(c => `<th>${esc(c.label)}</th>`).join("")}<th>状態</th><th></th></tr></thead>`;
+  const usedIds = new Set(state.fallbacks.flatMap(f => f.serviceIds || []));
+  const body = state.services.map((r, i) => {
+    const flags = [];
+    if (r.mfa && r.mfa !== "あり（全員）") flags.push('<span class="pill bad">多要素認証</span>');
+    if (r.contractClause && r.contractClause !== "あり") flags.push('<span class="pill bad">契約条項</span>');
+    if (String(r.impactedOps || "").trim() && !usedIds.has(r.id)) flags.push('<span class="pill bad">切替表なし</span>');
+    if (usedIds.has(r.id)) flags.push('<span class="pill ok">切替表あり</span>');
+    return `<tr><td class="rowno">${i + 1}</td>${LEDGER_COLS.map(c => `<td>${cellInput(c, r, "service")}</td>`).join("")}` +
+      `<td>${flags.join("")}</td><td><button type="button" class="btn danger" data-action="del-service" data-id="${esc(r.id)}">削除</button></td></tr>`;
+  }).join("");
+  document.getElementById("ledger-table").innerHTML = head + "<tbody>" + (body || `<tr><td colspan="${LEDGER_COLS.length + 3}" class="note">まだ行がありません。「＋ 行を追加」を押してください。</td></tr>`) + "</tbody>";
+  const s = ledgerStatus();
+  document.getElementById("ledger-summary").textContent = `登録 ${s.rows.length} 件／全項目記入済み ${s.complete.length} 件`;
+}
+function renderFallback() {
+  const head = `<thead><tr><th>No.</th>${FALLBACK_COLS.map(c => `<th>${esc(c.label)}</th>`).join("")}<th></th></tr></thead>`;
+  const body = state.fallbacks.map((r, i) =>
+    `<tr><td class="rowno">${i + 1}</td>${FALLBACK_COLS.map(c => `<td${c.type === "services" ? ' style="min-width:200px"' : ""}>${cellInput(c, r, "fallback")}</td>`).join("")}` +
+    `<td><button type="button" class="btn danger" data-action="del-fallback" data-id="${esc(r.id)}">削除</button></td></tr>`).join("");
+  document.getElementById("fallback-table").innerHTML = head + "<tbody>" + (body || `<tr><td colspan="${FALLBACK_COLS.length + 2}" class="note">まだ行がありません。「＋ 行を追加」を押してください。</td></tr>`) + "</tbody>";
+  const s = fallbackStatus();
+  document.getElementById("fallback-summary").textContent = `登録 ${s.rows.length} 業務／全項目記入済み ${s.complete.length} 業務`;
+}
+function onTableEdit(e) {
+  const t = e.target;
+  if (t.dataset.service) {
+    const row = state.services.find(r => r.id === t.dataset.service);
+    if (row) { row[t.dataset.key] = t.value; markDirty(); }
+    if (e.type === "change" && t.tagName === "SELECT") renderLedger();
+    if (e.type === "change") document.getElementById("ledger-summary").textContent = `登録 ${state.services.length} 件／全項目記入済み ${ledgerStatus().complete.length} 件`;
+  } else if (t.dataset.fallback) {
+    const row = state.fallbacks.find(r => r.id === t.dataset.fallback);
+    if (row) { row[t.dataset.key] = t.value; markDirty(); }
+  } else if (t.dataset.fallbackSvc && e.type === "change") {
+    const row = state.fallbacks.find(r => r.id === t.dataset.fallbackSvc);
+    if (row) {
+      const ids = new Set(row.serviceIds || []);
+      t.checked ? ids.add(t.value) : ids.delete(t.value);
+      // 台帳の並び順にそろえる
+      row.serviceIds = state.services.map(s => s.id).filter(id => ids.has(id));
+      markDirty();
+    }
+  }
+}
+["input", "change"].forEach(ev => {
+  document.getElementById("ledger-table").addEventListener(ev, onTableEdit);
+  document.getElementById("fallback-table").addEventListener(ev, onTableEdit);
+});
+
+/* ---------- 5. 出力 ---------- */
+function openItems() {
+  return STAR3_CRITS.filter(c => ["todo", "partial"].includes(check(c.no).status));
+}
+function openListHtml() {
+  const items = openItems();
+  if (!items.length) return '<p class="note">未対応・一部対応の評価基準はありません。</p>';
+  return '<table class="list"><thead><tr><th>要求事項</th><th>評価基準</th><th>評価基準の内容</th><th>状況</th><th>根拠メモ</th></tr></thead><tbody>' +
+    items.map(c => {
+      const q = reqByNo[c.req_no]; const ck = check(c.no);
+      return `<tr><td>${esc(q.no)}<br>${esc(q.title)}</td><td>${esc(c.no)}</td><td class="pre">${esc(c.text)}</td>` +
+        `<td><span class="st ${ck.status}">${STATUS_LABEL[ck.status]}</span></td><td class="pre">${esc(ck.memo)}</td></tr>`;
+    }).join("") + "</tbody></table>";
+}
+function renderOpenList() {
+  const t = tally(STAR3_CRITS);
+  document.getElementById("open-list").innerHTML =
+    `<p class="note">未対応 ${t.todo} 項目、一部対応 ${t.partial} 項目、未回答 ${t.none} 項目（★3評価基準 全${t.total}項目）。</p>` + openListHtml();
+}
+
+function sourceLine() {
+  const s = REQ.source;
+  return `出典：「${s.title}」（${s.publisher}）（${s.url}）（${s.retrieved}に取得、SHA-256: ${s.sha256}）を加工して作成`;
+}
+function renderAttribution() {
+  const s = REQ.source;
+  document.getElementById("attribution").innerHTML =
+    `<strong>出典と利用条件</strong><br>${esc(sourceLine())}<br>` +
+    `要求事項・評価基準の文言は上記のExcelファイルの記載をそのまま表示しています。画面の構成、分野ごとの集計、台帳・切替表との対応づけは本ツールで加えたものであり、経済産業省が作成したものではありません。` +
+    `<br>利用条件：経済産業省ウェブサイトのコンテンツは${esc(s.license)}に準拠して利用できます（経済産業省「利用規約」 https://www.meti.go.jp/main/rules.html ）。` +
+    `<br>取り込んだ資料：シート「${esc(s.sheet_name)}」／★3の要求事項 ${REQ.counts.requirements_star3} 件、★3の評価基準 ${REQ.counts.criteria_star3} 項目`;
+}
+
+function printFullHtml() {
+  const o = state.org;
+  const now = new Date();
+  const stamp = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日`;
+  let h = `<h1>SCS評価制度 ★3 自己点検結果（SCSセキュリティ専門家の確認用）</h1>`;
+  h += `<table><tbody>` +
+    `<tr><th style="width:22%">団体名・会社名</th><td>${esc(o.name)}</td><th style="width:14%">区分</th><td>${esc(o.kind)}</td></tr>` +
+    `<tr><th>点検した人</th><td>${esc(o.assessor)}</td><th>点検日</th><td>${esc(o.date)}</td></tr>` +
+    `<tr><th>確認を頼む専門家</th><td>${esc(o.expert)}</td><th>印刷日</th><td>${stamp}</td></tr>` +
+    `<tr><th>点検の範囲</th><td colspan="3" class="pre">${esc(o.scope)}</td></tr></tbody></table>`;
+  h += `<p style="font-size:8pt">${esc(sourceLine())}</p>`;
+  h += `<p style="font-size:8pt">この資料は自己点検の結果です。★3を満たしているかの判断は、SCSセキュリティ専門家の確認によります。</p>`;
+
+  h += `<h2>分野ごとの集計（★3評価基準）</h2><table><thead><tr><th>分野</th><th>項目数</th><th>対応済み</th><th>一部対応</th><th>未対応</th><th>対象外</th><th>未回答</th></tr></thead><tbody>`;
+  REQ.domains.forEach(d => {
+    const crits = STAR3_CRITS.filter(c => reqByNo[c.req_no].domain_no === d.no);
+    if (!crits.length) return;
+    const t = tally(crits);
+    h += `<tr><td>${esc(d.no)}. ${esc(d.name)}</td><td>${t.total}</td><td>${t.done}</td><td>${t.partial}</td><td>${t.todo}</td><td>${t.na}</td><td>${t.none}</td></tr>`;
+  });
+  const T = tally(STAR3_CRITS);
+  h += `<tr><th>合計</th><th>${T.total}</th><th>${T.done}</th><th>${T.partial}</th><th>${T.todo}</th><th>${T.na}</th><th>${T.none}</th></tr></tbody></table>`;
+
+  h += `<h2 class="pagebreak">点検結果一覧</h2><table><thead><tr><th style="width:9%">評価基準No.</th><th style="width:33%">評価基準</th><th style="width:8%">判定</th><th style="width:22%">根拠メモ</th><th style="width:18%">証跡の置き場所</th><th style="width:10%">専門家確認</th></tr></thead><tbody>`;
+  STAR3_REQS.forEach(q => {
+    h += `<tr class="reqrow"><td colspan="6">要求事項 ${esc(q.no)} ${esc(q.title)}：${esc(q.text)}</td></tr>`;
+    critsOf(q.no).forEach(c => {
+      const ck = check(c.no);
+      h += `<tr><td>${esc(c.no)}</td><td class="pre">${esc(c.text)}</td><td><span class="st ${ck.status}">${STATUS_LABEL[ck.status]}</span></td>` +
+        `<td class="pre">${esc(ck.memo)}</td><td class="pre">${esc(ck.evidence)}</td><td></td></tr>`;
+    });
+  });
+  h += `</tbody></table>`;
+
+  h += `<h2 class="pagebreak">外部サービス・委託先台帳</h2>` + printTable(LEDGER_COLS, state.services);
+  h += `<h2>停止時の業務切替表</h2>` + printTable(FALLBACK_COLS, state.fallbacks);
+
+  h += `<h2>確認欄</h2><table class="sign"><tbody>` +
+    `<tr><th style="width:25%">点検した人（署名・日付）</th><td></td></tr>` +
+    `<tr><th>確認したSCSセキュリティ専門家（署名・日付）</th><td></td></tr>` +
+    `<tr><th>専門家からの指摘事項</th><td style="height:80pt"></td></tr></tbody></table>`;
+  return h;
+}
+function printTable(cols, rows) {
+  if (!rows.length) return "<p>（記入なし）</p>";
+  return `<table><thead><tr><th>No.</th>${cols.map(c => `<th>${esc(c.label)}</th>`).join("")}</tr></thead><tbody>` +
+    rows.map((r, i) => `<tr><td>${i + 1}</td>${cols.map(c => {
+      const v = c.type === "services" ? (r.serviceIds || []).map(serviceName).filter(Boolean).join("、") : r[c.key];
+      return `<td class="pre">${esc(v)}</td>`;
+    }).join("")}</tr>`).join("") + "</tbody></table>";
+}
+function printOpenHtml() {
+  const o = state.org;
+  const t = tally(STAR3_CRITS);
+  return `<h1>SCS評価制度 ★3 未対応・一部対応の一覧</h1>` +
+    `<p>${esc(o.name)}　点検日：${esc(o.date)}　点検した人：${esc(o.assessor)}</p>` +
+    `<p>未対応 ${t.todo} 項目、一部対応 ${t.partial} 項目、未回答 ${t.none} 項目（★3評価基準 全${t.total}項目）</p>` +
+    openListHtml() + `<p style="font-size:8pt">${esc(sourceLine())}</p>`;
+}
+function doPrint(kind) {
+  document.getElementById("print-area").innerHTML = kind === "full" ? printFullHtml() : printOpenHtml();
+  window.print();
+}
+
+/* ---------- 保存・読み込み ---------- */
+function exportJson() {
+  state.savedAt = new Date().toISOString();
+  const blob = new Blob([JSON.stringify(state, null, 1)], { type: "application/json" });
+  const a = document.createElement("a");
+  const d = new Date();
+  const ymd = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
+  const org = (state.org.name || "未記入").replace(/[\\/:*?"<>|\s]+/g, "_");
+  a.href = URL.createObjectURL(blob);
+  a.download = `scs-star3-selfcheck_${org}_${ymd}.json`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  dirty = false;
+}
+
+// 読み込んだデータを点検できる形に整える。問題点は notes に入れて返す。
+function normalizeLoaded(data) {
+  const notes = [];
+  if (!data || data.format !== FORMAT) throw new Error("このツールで保存したJSONファイルではありません。");
+  if (data.formatVersion > FORMAT_VERSION) notes.push("新しい版のツールで保存されたファイルです。一部の項目が読み込めない可能性があります。");
+  if (data.requirementsSha256 && data.requirementsSha256 !== REQ.source.sha256)
+    notes.push("保存したときと、いまのツールに入っている要求事項・評価基準の版が違います。内容が変わっている評価基準がないか確認してください。");
+  const s = emptyState();
+  Object.keys(s.org).forEach(k => { if (data.org && typeof data.org[k] === "string") s.org[k] = data.org[k]; });
+  const known = new Set(STAR3_CRITS.map(c => c.no));
+  const unknown = [];
+  Object.entries(data.checks || {}).forEach(([no, v]) => {
+    if (!known.has(no)) { unknown.push(no); return; }
+    s.checks[no] = {
+      status: STATUSES.some(x => x.v === v.status) ? v.status : "",
+      memo: typeof v.memo === "string" ? v.memo : "",
+      evidence: typeof v.evidence === "string" ? v.evidence : "",
+    };
+  });
+  if (unknown.length) notes.push("いまの★3評価基準にない番号の点検結果は読み込みませんでした：" + unknown.join("、"));
+  const str = v => typeof v === "string" ? v : "";
+  s.services = (data.services || []).map(r => {
+    const o = { id: str(r.id) || newId("s") };
+    LEDGER_COLS.forEach(c => { o[c.key] = str(r[c.key]); });
+    return o;
+  });
+  const svcIds = new Set(s.services.map(r => r.id));
+  let dropped = 0;
+  s.fallbacks = (data.fallbacks || []).map(r => {
+    const o = { id: str(r.id) || newId("f") };
+    FALLBACK_COLS.forEach(c => { if (c.type !== "services") o[c.key] = str(r[c.key]); });
+    const ids = Array.isArray(r.serviceIds) ? r.serviceIds : [];
+    o.serviceIds = ids.filter(id => svcIds.has(id));
+    dropped += ids.length - o.serviceIds.length;
+    return o;
+  });
+  if (dropped) notes.push(`切替表で、台帳にないサービスを指していた ${dropped} か所を外しました。`);
+  s.savedAt = data.savedAt || null;
+  return { state: s, notes };
+}
+function loadState(data, label) {
+  let result;
+  try { result = normalizeLoaded(data); } catch (err) { alert("読み込めませんでした：" + err.message); return false; }
+  state = result.state;
+  dirty = false;
+  renderAll();
+  alert(label + "を読み込みました。" + (result.notes.length ? "\n\n" + result.notes.join("\n") : ""));
+  return true;
+}
+function confirmDiscard() {
+  return !dirty || confirm("保存していない入力があります。読み込むと今の入力は消えます。続けますか？");
+}
+document.getElementById("import-file").addEventListener("change", e => {
+  const file = e.target.files[0];
+  e.target.value = "";
+  if (!file || !confirmDiscard()) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    let data;
+    try { data = JSON.parse(reader.result); } catch (err) { alert("JSONファイルとして読めませんでした。"); return; }
+    loadState(data, "「" + file.name + "」");
+  };
+  reader.readAsText(file, "utf-8");
+});
+const sampleSelect = document.getElementById("sample-select");
+SAMPLES.forEach((s, i) => {
+  const opt = document.createElement("option");
+  opt.value = String(i);
+  opt.textContent = "見本：" + s.org.name;
+  sampleSelect.appendChild(opt);
+});
+sampleSelect.addEventListener("change", () => {
+  const i = sampleSelect.value;
+  sampleSelect.value = "";
+  if (i === "" || !confirmDiscard()) return;
+  loadState(JSON.parse(JSON.stringify(SAMPLES[Number(i)])), "見本データ");
+});
+
+/* ---------- 画面全体 ---------- */
+function showTab(name) {
+  document.querySelectorAll("nav.tabs button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === name)));
+  document.querySelectorAll("section.tab").forEach(s => s.classList.toggle("active", s.id === "tab-" + name));
+  if (name === "check") { renderProgress(); renderLinkedPanels(); applyFilter(); }
+  if (name === "ledger") renderLedger();
+  if (name === "fallback") renderFallback();
+  if (name === "output") renderOpenList();
+  window.scrollTo(0, 0);
+}
+document.querySelector("nav.tabs").addEventListener("click", e => {
+  const b = e.target.closest("button[data-tab]");
+  if (b) showTab(b.dataset.tab);
+});
+document.addEventListener("click", e => {
+  const go = e.target.closest("[data-goto]");
+  if (go) { showTab(go.dataset.goto); return; }
+  const b = e.target.closest("[data-action]");
+  if (!b) return;
+  const id = b.dataset.id;
+  switch (b.dataset.action) {
+    case "export": exportJson(); break;
+    case "import": document.getElementById("import-file").click(); break;
+    case "print-full": doPrint("full"); break;
+    case "print-open": doPrint("open"); break;
+    case "clear-status": {
+      setCheck(b.dataset.crit, "status", "");
+      document.querySelectorAll(`input[name="${CSS.escape("st-" + b.dataset.crit)}"]`).forEach(r => { r.checked = false; });
+      updateNaWarn(b.dataset.crit);
+      renderProgress();
+      break;
+    }
+    case "add-service": {
+      const row = { id: newId("s") };
+      LEDGER_COLS.forEach(c => { row[c.key] = ""; });
+      state.services.push(row); markDirty(); renderLedger();
+      break;
+    }
+    case "del-service": {
+      const used = state.fallbacks.filter(f => (f.serviceIds || []).includes(id));
+      const name = serviceName(id);
+      const msg = used.length
+        ? `「${name}」は切替表の ${used.length} 業務から参照されています。削除すると、その参照も外れます。削除しますか？`
+        : `「${name}」の行を削除しますか？`;
+      if (!confirm(msg)) return;
+      state.services = state.services.filter(s => s.id !== id);
+      state.fallbacks.forEach(f => { f.serviceIds = (f.serviceIds || []).filter(x => x !== id); });
+      markDirty(); renderLedger();
+      break;
+    }
+    case "add-fallback": {
+      const row = { id: newId("f"), serviceIds: [] };
+      FALLBACK_COLS.forEach(c => { if (c.type !== "services") row[c.key] = ""; });
+      state.fallbacks.push(row); markDirty(); renderFallback();
+      break;
+    }
+    case "del-fallback": {
+      const r = state.fallbacks.find(f => f.id === id);
+      if (!confirm(`「${(r && r.operation) || "（業務名未記入）"}」の行を削除しますか？`)) return;
+      state.fallbacks = state.fallbacks.filter(f => f.id !== id);
+      markDirty(); renderFallback();
+      break;
+    }
+    case "reset": {
+      if (!confirm("入力した内容をすべて消します。よろしいですか？（保存したJSONファイルは消えません）")) return;
+      state = emptyState(); dirty = false; renderAll();
+      break;
+    }
+  }
+});
+window.addEventListener("beforeunload", e => {
+  if (dirty) { e.preventDefault(); e.returnValue = ""; }
+});
+
+function renderAll() {
+  renderOrg();
+  renderChecklist();
+  renderProgress();
+  renderLedger();
+  renderFallback();
+  renderOpenList();
+}
+renderAttribution();
+renderAll();
+</script>
+</body>
+</html>

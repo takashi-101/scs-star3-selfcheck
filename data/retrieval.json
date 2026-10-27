@@ -1,0 +1,48 @@
+{
+ "retrieved": "2026-10-27",
+ "pages_checked": [
+  {
+   "url": "https://www.meti.go.jp/policy/netsecurity/scs.html",
+   "title": "サプライチェーン強化に向けたセキュリティ対策評価制度（SCS評価制度）（経済産業省）",
+   "note": "「★3・★4要求事項及び評価基準（Excel形式：51KB）」と「（参考）★3・★4要求事項及び評価基準 参照文献（Excel形式：70KB）」が掲載されていた。FAQの最終更新日は令和8年3月27日。"
+  },
+  {
+   "url": "https://www.ipa.go.jp/security/scs/requirements-criteria.html",
+   "title": "要求事項・評価基準（IPA）",
+   "note": "公開日・最終更新日とも2026年4月21日。「★3・★4 要求事項・評価基準(Excel:52 KB)」を掲載。要求事項・評価基準の解説書は「2026年10月頃公開予定」と書かれており、取得日時点では未掲載。"
+  },
+  {
+   "url": "https://www.meti.go.jp/main/rules.html",
+   "title": "利用規約（経済産業省）",
+   "note": "経済産業省ウェブサイトのコンテンツは、権利表記がない限り「公共データ利用規約（第1.0版）」（PDL1.0）に準拠。出典の記載と、編集・加工した場合はその旨の記載を求めている。ページの最終更新日は2025年8月27日。"
+  }
+ ],
+ "files": [
+  {
+   "role": "取り込み元（要求事項・評価基準）",
+   "url": "https://www.meti.go.jp/policy/netsecurity/docs/scs/scs_3.xlsx",
+   "saved_as": "data/source/scs_3.xlsx",
+   "bytes": 52316,
+   "sha256": "d4c27aa4bfed5521a98ff9ce8c042743e4204e4b8310ceb3df0c54eabfdc8dd1",
+   "http_last_modified": "Thu, 25 Jun 2026 01:20:46 GMT",
+   "xlsx_core_created": "2026-03-24T10:27:36Z",
+   "xlsx_core_modified": "2026-03-25T06:31:53Z",
+   "sheet_name": "★3・★4要求事項・評価基準"
+  },
+  {
+   "role": "同一ファイルの確認（IPA掲載分）",
+   "url": "https://www.ipa.go.jp/security/scs/rcu1hd0000007a2i-att/20260327001-c.xlsx",
+   "bytes": 52316,
+   "sha256": "d4c27aa4bfed5521a98ff9ce8c042743e4204e4b8310ceb3df0c54eabfdc8dd1",
+   "http_last_modified": "Tue, 21 Apr 2026 06:02:33 GMT",
+   "note": "経済産業省掲載分とSHA-256が一致。より新しい版は見つからなかった。"
+  },
+  {
+   "role": "参考（取り込みには使っていない）",
+   "url": "https://www.meti.go.jp/policy/netsecurity/docs/scs/scs_3-1.xlsx",
+   "title": "（参考）★3・★4要求事項及び評価基準 参照文献",
+   "bytes": 72190,
+   "sha256": "db2da9a6c4788fb2cf10075f57f6f387069886eead90e7ef164b4c0c559676ff"
+  }
+ ]
+}
