@@ -93,4 +93,6 @@ python -m unittest discover -s tests
 
 ## ライセンス
 
-要求事項・評価基準（`data/source/scs_3.xlsx`、`data/requirements.json`、および `index.html` に埋め込んだその内容）は上記のとおりPDL1.0に従います。ツール本体（画面とスクリプト）のライセンスは未定です。
+ツール本体（画面、スクリプト、テスト、見本データ）は MIT License です。全文は [LICENSE](LICENSE) にあります。
+
+ただし、要求事項・評価基準（`data/source/scs_3.xlsx`、`data/requirements.json`、および `index.html` に埋め込んだその内容）はMIT Licenseの対象外で、上記のとおりPDL1.0に従います。
