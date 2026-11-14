@@ -95,6 +95,13 @@ python -m unittest discover -s tests
 
 同じ出典表示を、ツール画面の下部と印刷物にも入れています。
 
+## 根拠（学習）
+
+| 機能 | 裏付けになる学習（発行元・名称・発行日） | 照会先（Credly） |
+|---|---|---|
+| ★3の要求事項に沿った自己点検 | Amazon Web Services Training and Certification「AWS Knowledge: Security Champion - Training Badge」2025年11月10日 | https://www.credly.com/badges/ddab077d-58eb-4807-bec1-69e5c6aeb9a5 |
+| 外部への通信をブラウザに禁止させる作り（Content-Security-Policy） | Amazon Web Services Training and Certification「AWS Educate Getting Started with Security - Training Badge」2025年5月3日 | https://www.credly.com/badges/6194d85e-eb38-4e1a-83b6-b2d06a08d5aa |
+
 ## ライセンス
 
 ツール本体（画面、スクリプト、テスト、見本データ）は MIT License です。全文は [LICENSE](LICENSE) にあります。
