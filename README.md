@@ -99,7 +99,7 @@ python -m unittest discover -s tests
 
 | 求められる力 | 機能 | 裏付けになる学習（発行元・名称・発行日） | 照会先（Credly） |
 |---|---|---|---|
-| セキュリティ・ガバナンス | ★3の要求事項に沿った自己点検 | Amazon Web Services Training and Certification「AWS Knowledge: Security Champion - Training Badge」2025年11月10日 | https://www.credly.com/badges/ddab077d-58eb-4807-bec1-69e5c6aeb9a5 |
+| セキュリティ・ガバナンス | ★3の要求事項・評価基準ごとの自己点検と、未対応の項目の一覧（`index.html` の `renderChecklist`・`tally`・`renderOpenList`） | Amazon Web Services Training and Certification「AWS Knowledge: Security Champion - Training Badge」2025年11月10日 | https://www.credly.com/badges/ddab077d-58eb-4807-bec1-69e5c6aeb9a5 |
 | セキュリティ・ガバナンス | 外部への通信をブラウザに禁止させる作り（Content-Security-Policy） | Amazon Web Services Training and Certification「AWS Educate Getting Started with Security - Training Badge」2025年5月3日 | https://www.credly.com/badges/6194d85e-eb38-4e1a-83b6-b2d06a08d5aa |
 
 「求められる力」の分け方は、[プロフィール](https://github.com/takashi-101) の「FDE・AXで求められる力と、その根拠」と同じです。
